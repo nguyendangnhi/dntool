@@ -41,13 +41,25 @@
             border: 1px dashed rgba(59, 130, 246, 0.5);
             font-family: 'JetBrains Mono', monospace;
         }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fade-in-up 0.4s ease-out forwards;
+        }
     </style>
 </head>
 <body>
     <div class="glass-card text-center">
+        <!-- Logo Section -->
         <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-3xl font-black shadow-lg shadow-blue-500/30">DN</div>
-        <h1 class="text-2xl font-black mb-1 italic">DNTOOL <span class="text-blue-500 not-italic font-light">SYSTEM</span></h1>Hệ Thống DNTOOL < class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">
+        
+        <!-- Header Section -->
+        <h1 class="text-2xl font-black mb-1 italic">DNTOOL <span class="text-blue-500 not-italic font-light">SYSTEM</span></h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">Hệ Thống Xác Thực </p>
 
+        <!-- Step 1: Action Button -->
         <div id="step-1">
             <button onclick="getKey()" id="btnAction" class="btn-main w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform active:scale-95">
                 <i class="fas fa-bolt"></i>
@@ -56,7 +68,8 @@
             <p class="mt-6 text-[11px] text-slate-500 leading-relaxed italic">Yêu cầu của bạn sẽ được xử lý .</p>
         </div>
 
-        <div id="step-2" class="hidden animate-in fade-in slide-in-from-bottom-4">
+        <!-- Step 2: Result Display -->
+        <div id="step-2" class="hidden animate-in">
             <div class="key-box p-5 rounded-2xl text-left">
                 <p class="text-[9px] text-blue-400 font-bold uppercase mb-2">Key của bạn:</p>
                 <div id="resultKey" class="text-sm font-bold text-white break-all mb-4">---</div>
@@ -68,7 +81,7 @@
     </div>
 
     <script>
-        // Thay bằng URL Worker của bạn
+        // URL Worker Cloudflare
         const WORKER_URL = "https://petercrouch.nguyendangnhi1704.workers.dev/";
 
         async function getKey() {
@@ -76,16 +89,23 @@
             const id = params.get('id');
             const token = params.get('token');
 
-            if(!id) return alert("Thiếu ID máy!");
+            if(!id) {
+                alert("Lỗi: Không tìm thấy ID thiết bị (Thiếu tham số 'id')!");
+                return;
+            }
 
             const btn = document.getElementById('btnAction');
             const btnText = document.getElementById('btnText');
+            
             btn.disabled = true;
             btnText.innerText = "ĐANG XÁC THỰC...";
 
             try {
-                // Gọi tới Worker (GET)
-                const res = await fetch(`${WORKER_URL}?id=${id}&token=${token}&get_code=true`);
+                // Gọi tới Worker thông qua giao thức GET
+                const res = await fetch(`${WORKER_URL}?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token || '')}&get_code=true`);
+                
+                if (!res.ok) throw new Error("Phản hồi từ Server không hợp lệ");
+                
                 const data = await res.json();
 
                 if(data.status === "success") {
@@ -93,26 +113,29 @@
                     document.getElementById('step-1').classList.add('hidden');
                     document.getElementById('step-2').classList.remove('hidden');
                 } else {
-                    alert("Lỗi: " + data.info);
+                    alert("Yêu cầu bị từ chối: " + (data.info || "Lỗi không xác định"));
                     btn.disabled = false;
                     btnText.innerText = "THỬ LẠI";
                 }
             } catch (e) {
-                alert("Không thể kết nối tới Worker!");
+                console.error(e);
+                alert("Lỗi kết nối: Không thể liên lạc !");
                 btn.disabled = false;
+                btnText.innerText = "KẾT NỐI LẠI";
             }
         }
 
         function copyText() {
             const key = document.getElementById('resultKey').innerText;
-            navigator.clipboard.writeText(key).then(() => alert("✅ Đã sao chép!"));
+            // Sử dụng phương thức copy truyền thống để hỗ trợ các trình duyệt trong App (WebView)
+            const el = document.createElement('textarea');
+            el.value = key;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("✅ Đã sao chép mã Key!");
         }
     </script>
 </body>
 </html>
-
-
-
-
-
-
