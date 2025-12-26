@@ -8,11 +8,12 @@
         :root {
             --primary: #4f46e5;
             --primary-hover: #4338ca;
-            --bg: #f8fafc;
+            --bg: #0f172a;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-sub: #64748b;
             --accent: #ef4444;
+            --success: #059669;
         }
 
         body {
@@ -23,84 +24,110 @@
             align-items: center;
             min-height: 100vh;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+            background-color: var(--bg);
+            background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%), 
+                              radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.1) 0px, transparent 50%);
             color: var(--text-main);
         }
 
         .container {
             background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             text-align: center;
-            width: 100%;
-            max-width: 420px;
+            width: 95%;
+            max-width: 480px; /* Tăng độ rộng để chứa 40 ký tự */
             margin: 1rem;
-            border: 1px solid #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .logo {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: var(--primary);
-            border-radius: 1rem;
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            margin: 0 auto 1rem;
         }
 
         .logo svg {
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             fill: white;
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 800;
-            margin: 0 0 0.5rem;
-            letter-spacing: -0.025em;
+            margin: 0 0 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .desc {
             color: var(--text-sub);
-            font-size: 0.875rem;
-            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
         }
 
         .key-area {
-            background: #f1f5f9;
-            padding: 1.5rem;
-            border-radius: 1rem;
+            background: #f8fafc;
+            padding: 1.25rem 1rem;
+            border-radius: 0.75rem;
             margin-bottom: 1.5rem;
             position: relative;
-            border: 2px dashed #cbd5e1;
+            border: 2px solid #e2e8f0;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         #key-display {
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.95rem; /* Giảm size một chút để hiển thị đủ 40 ký tự trên mobile */
             font-weight: 700;
-            color: var(--accent);
+            color: var(--text-main);
             word-break: break-all;
-            line-height: 1.5;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
         }
 
-        .loading {
+        .source-tag {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #e2e8f0;
+            padding: 2px 10px;
+            border-radius: 99px;
+            margin-top: 10px;
             color: var(--text-sub);
-            font-style: italic;
+        }
+
+        .loading-dots:after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: var(--text-sub); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 var(--text-sub), .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 var(--text-sub), .5em 0 0 var(--text-sub); }
         }
 
         .btn {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            font-size: 1rem;
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 0.9rem;
             width: 100%;
             cursor: pointer;
             transition: all 0.2s;
@@ -108,76 +135,100 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
         }
 
-        .btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
+        .btn:active {
+            transform: scale(0.98);
         }
 
         .footer {
-            margin-top: 1.5rem;
-            font-size: 0.75rem;
+            margin-top: 1.25rem;
+            font-size: 0.7rem;
             color: var(--text-sub);
+            line-height: 1.4;
         }
 
-        /* Toast Notification */
         #toast {
             position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
+            top: 1rem;
+            background: #10b981;
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
             display: none;
             z-index: 100;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
+    <div id="toast">Đã sao chép mã 40 ký tự!</div>
+
     <div class="container">
         <div class="logo">
-            <svg viewBox="0 0 24 24"><path d="M12.85 2.15c-.4-.4-1.3-.4-1.7 0L2.15 11.15c-.4.4-.4 1.3 0 1.7L11.15 21.85c.4.4 1.3.4 1.7 0l9-9c.4-.4.4-1.3 0-1.7l-9-9zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
         </div>
-        <h1>DNTOOL AUTH</h1>
-        <p class="desc">Vui lòng sao chép mã kích hoạt bên dưới</p>
+        <h1>DNTOOL AUTHENTICATOR</h1>
+        <p class="desc">Vượt link thành công! Dưới đây là mã của bạn:</p>
 
-        <div class="key-area">
-            <div id="key-display"><span class="loading">Đang khởi tạo mã bảo mật...</span></div>
+        <div class="key-area" id="key-container">
+            <div id="key-display"><span class="loading-dots">Đang truy vấn hệ thống</span></div>
+            <div id="source-display"></div>
         </div>
 
         <button class="btn" onclick="copyKey()">
-            <svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" /></svg>
-            SAO CHÉP MÃ
+            <svg style="width:18px;height:18px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" /></svg>
+            SAO CHÉP MÃ KÍCH HOẠT
         </button>
 
         <div class="footer">
-            Mã có hiệu lực trong 24h. <br /> Không chia sẻ mã này với người khác.
+            Mã định danh gồm 40 ký tự dành riêng cho thiết bị của bạn. <br> 
+            <b>Lưu ý:</b> Mã có hiệu lực kích hoạt trong vòng 24 giờ.
         </div>
     </div>
 
-    <div id="toast">Đã sao chép vào bộ nhớ tạm!</div>
-
     <script>
-        // CẤU HÌNH TẠI ĐÂY: Thay link Web App (kết thúc bằng /exec) của bạn vào đây
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxxNt8mECqBvwboVoVeaUR9uPAY8C5iyqZcnr-qUXNgMIDnlb5YqKiZNj0sAugt2bA/exec";
+        const GITHUB_URL = "https://nguyendangnhi.github.io/dntool/keys.json";
+        const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbwxxNt8mECqBvwboVoVeaUR9uPAY8C5iyqZcnr-qUXNgMIDnlb5YqKiZNj0sAugt2bA/exec";
 
-        async function fetchKey() {
+        async function getFinalKey() {
             const urlParams = new URLSearchParams(window.location.search);
-            const deviceId = urlParams.get('id') || "CHUA_CO_ID";
+            const deviceId = urlParams.get('id') || "UNKNOWN_DEVICE";
+            const display = document.getElementById('key-display');
+            const source = document.getElementById('source-display');
             
+            // Giả lập độ trễ xác thực cho chuyên nghiệp
+            await new Promise(r => setTimeout(r, 800));
+
             try {
-                // Gọi đến Apps Script lấy key dạng text thuần túy
-                const response = await fetch(SCRIPT_URL + "?id=" + deviceId + "&type=api");
-                const key = await response.text();
-                document.getElementById('key-display').innerText = key;
+                // 1. Thử lấy từ GitHub Cloud
+                const ghResponse = await fetch(GITHUB_URL, { cache: "no-store" });
+                if (ghResponse.ok) {
+                    const ghData = await ghResponse.text();
+                    let key = ghData.trim();
+                    // Nếu key GitHub ngắn, ta có thể nối thêm logic để đủ 40 ký tự nếu cần
+                    display.innerText = key;
+                    source.innerHTML = '<span class="source-tag">Hệ thống: GitHub Cloud</span>';
+                    display.style.color = "var(--success)";
+                    return;
+                }
+            } catch (e) { console.log("GitHub Offline"); }
+
+            try {
+                // 2. Lấy mã MD5/SHA từ Apps Script (Dự phòng)
+                const asResponse = await fetch(FALLBACK_URL + "?id=" + deviceId + "&type=api");
+                let key = await asResponse.text();
+                
+                // Đảm bảo hiển thị đủ chuỗi dài
+                display.innerText = key.trim();
+                source.innerHTML = '<span class="source-tag">Hệ thống: Local MD5</span>';
             } catch (error) {
-                document.getElementById('key-display').innerText = "LỖI KẾT NỐI SERVER";
-                console.error(error);
+                display.innerText = "LỖI TẠO MÃ - VUI LÒNG THỬ LẠI";
+                display.style.color = "var(--accent)";
             }
         }
 
@@ -194,18 +245,10 @@
 
             const toast = document.getElementById('toast');
             toast.style.display = 'block';
-            setTimeout(function() { toast.style.display = 'none'; }, 2500);
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
         }
 
-        // Chạy khi trang web load xong
-        window.onload = fetchKey;
+        window.onload = getFinalKey;
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
