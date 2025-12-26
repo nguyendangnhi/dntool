@@ -1,277 +1,228 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hệ Thống Xác Thực DNTOOL</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNTOOL - SECURE CLOUD GATEWAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (Sử dụng bản Compat để dễ tích hợp nhanh) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg: #0f172a;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-sub: #64748b;
-            --accent: #ef4444;
-            --success: #059669;
+            --bg-color: #06080f;
+            --brand-blue: #3b82f6;
+            --brand-glow: rgba(59, 130, 246, 0.5);
+            --card-glass: rgba(15, 23, 42, 0.9);
         }
 
         body {
-            margin: 0;
-            padding: 0;
+            background-color: var(--bg-color);
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%), 
-                              radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.1) 0px, transparent 50%);
-            color: var(--text-main);
+            margin: 0;
+            overflow: hidden;
         }
 
-        .container {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 1.25rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            width: 95%;
-            max-width: 480px;
-            margin: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .background-animate {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(30, 64, 175, 0.15) 0%, transparent 50%);
+            z-index: -1;
         }
 
-        .logo {
-            width: 50px;
-            height: 50px;
-            background: var(--primary);
-            border-radius: 0.75rem;
+        .glass-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 90%;
+            max-width: 420px;
+            border-radius: 2.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+        }
+
+        .brand-logo-hex {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            margin: 0 auto 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-        }
-
-        .logo svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
-        }
-
-        h1 {
-            font-size: 1.25rem;
-            font-weight: 800;
-            margin: 0 0 0.25rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .desc {
-            color: var(--text-sub);
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .key-area {
-            background: #f8fafc;
-            padding: 1.25rem 1rem;
-            border-radius: 0.75rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            border: 2px solid #e2e8f0;
-            min-height: 100px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #key-display {
-            font-family: 'JetBrains Mono', 'Consolas', monospace;
-            font-size: 0.8rem; 
-            font-weight: 700;
-            color: var(--text-main);
-            word-break: break-all;
-            line-height: 1.4;
-            letter-spacing: 0.5px;
-            padding: 0 10px;
-        }
-
-        .source-tag {
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            background: #e2e8f0;
-            padding: 2px 10px;
-            border-radius: 99px;
-            margin-top: 10px;
-            color: var(--text-sub);
-        }
-
-        .loading-dots:after {
-            content: ' .';
-            animation: dots 1.5s steps(5, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
-            40% { color: var(--text-sub); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
-            60% { text-shadow: .25em 0 0 var(--text-sub), .5em 0 0 rgba(0,0,0,0); }
-            80%, 100% { text-shadow: .25em 0 0 var(--text-sub), .5em 0 0 var(--text-sub); }
-        }
-
-        .btn-copy {
-            background: var(--primary);
+            font-size: 36px;
+            font-weight: 900;
             color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            font-weight: 700;
-            font-size: 1rem;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 0 30px var(--brand-glow);
+            transition: transform 0.3s ease;
         }
 
-        .btn-copy:hover {
-            background: var(--primary-hover);
+        .brand-logo-hex:hover {
+            transform: scale(1.05) rotate(5deg);
+        }
+
+        .btn-request {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 10px 25px -5px var(--brand-glow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-request:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+            filter: brightness(1.1);
         }
 
-        .btn-copy:active {
-            transform: translateY(0);
+        .key-display {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed rgba(59, 130, 246, 0.4);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .footer {
-            margin-top: 1.5rem;
-            font-size: 0.75rem;
-            color: var(--text-sub);
-            line-height: 1.5;
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-
-        #toast {
-            position: fixed;
-            top: 1.5rem;
-            background: #10b981;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="toast">✅ Đã sao chép mã kích hoạt!</div>
+    <div class="background-animate"></div>
 
-    <div class="container">
-        <div class="logo">
-            <svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+    <div class="glass-card text-center">
+        <!-- Brand Logo -->
+        <div class="brand-logo-hex">DN</div>
+        
+        <h1 class="text-2xl font-black tracking-tight text-white mb-1 uppercase italic">DNTOOL <span class="text-blue-500 not-italic font-light">PRO</span></h1>
+        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">Cloud Security Verified</p>
+
+        <!-- Trạng thái chờ -->
+        <div id="ui-request" class="space-y-6">
+            <div class="bg-blue-500/5 border border-blue-500/10 p-4 rounded-2xl">
+                <p class="text-xs text-slate-400 leading-relaxed italic">Vui lòng xác thực thiết bị để nhận mã kích hoạt từ hệ thống đám mây.</p>
+            </div>
+            
+            <button id="btnAction" onclick="fetchKeyViaFirebase()" class="btn-request w-full py-4 rounded-2xl text-white font-extrabold flex items-center justify-center gap-3">
+                <i class="fas fa-fingerprint text-xl"></i>
+                <span id="btnText">XÁC THỰC THIẾT BỊ</span>
+                <div id="loader" class="hidden loader"></div>
+            </button>
         </div>
-        <h1>DNTOOL AUTHENTICATOR</h1>
-        <p class="desc">Vượt link thành công! Nhấn nút dưới đây để sao chép:</p>
 
-        <div class="key-area" id="key-container">
-            <div id="key-display"><span class="loading-dots">Đang khởi tạo mã bảo mật</span></div>
-            <div id="source-display"></div>
+        <!-- Trạng thái hiện Key -->
+        <div id="ui-result" class="hidden space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="key-display p-5 rounded-2xl text-left">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[9px] bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-black uppercase">Mã Của Bạn</span>
+                    <i class="fas fa-shield-check text-emerald-500"></i>
+                </div>
+                <div id="finalKey" class="text-white text-sm font-bold break-all mb-4">---</div>
+                <button onclick="copyToClipboard()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold border border-blue-500/20 transition-all text-blue-400">
+                    SAO CHÉP MÃ
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-600 font-bold uppercase italic">Mã này được bảo mật bởi Firebase Proxy</p>
         </div>
 
-        <button class="btn-copy" onclick="copyKey()">
-            <svg style="width:22px;height:22px" viewBox="0 0 24 24"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" /></svg>
-            SAO CHÉP MÃ NGAY
-        </button>
-
-        <div class="footer">
-            Mã định danh bắt đầu bằng <b>DNTOOL-</b> <br>
-            Hệ thống tự động mã hóa 40 ký tự bảo mật.
+        <!-- Footer -->
+        <div class="mt-10 pt-6 border-t border-white/5 flex flex-col items-center gap-2">
+            <div class="flex gap-4 text-slate-700">
+                <i class="fab fa-telegram"></i>
+                <i class="fas fa-shield"></i>
+            </div>
+            <p class="text-[9px] text-slate-800 font-black uppercase tracking-widest">Gateway v5.0 Deep-Shield Enabled</p>
         </div>
     </div>
 
     <script>
-        const GITHUB_URL = "https://nguyendangnhi.github.io/dntool/keys.json";
-        const FALLBACK_URL = "https://script.google.com/macros/s/AKfycbxRduqLd1eX6MlMbAaFKQwqrepxteDGocz4QJMOkihdexTqMV42R43p6uPmelQP0uew/exec";
+        // Cấu hình Firebase (Lấy từ Firebase Console của bạn)
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "dntool-auth.firebaseapp.com",
+            projectId: "dntool-auth",
+            storageBucket: "dntool-auth.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
+        };
 
-        // Hàm băm SHA-1 và thêm tiền tố DNTOOL-
-        async function generateFinalDNKey(rawStr) {
-            const buffer = new TextEncoder().encode(rawStr);
-            const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-            return "DNTOOL-" + hashHex;
-        }
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const functions = firebase.functions();
 
-        async function loadKey() {
+        async function fetchKeyViaFirebase() {
             const urlParams = new URLSearchParams(window.location.search);
-            const deviceId = urlParams.get('id') || "ID_MAC_DINH";
-            const display = document.getElementById('key-display');
-            const source = document.getElementById('source-display');
-            
-            await new Promise(r => setTimeout(r, 1000));
+            const idMay = urlParams.get('id');
+            const token = urlParams.get('token');
+
+            if (!idMay) {
+                alert("❌ Lỗi: Không tìm thấy ID máy. Vui lòng mở lại từ App!");
+                return;
+            }
+
+            const btn = document.getElementById('btnAction');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+
+            btn.disabled = true;
+            btnText.innerText = "ĐANG XÁC THỰC...";
+            loader.classList.remove('hidden');
 
             try {
-                // 1. Lấy từ GitHub
-                const ghResponse = await fetch(GITHUB_URL, { cache: "no-store" });
-                if (ghResponse.ok) {
-                    const ghData = await ghResponse.text();
-                    display.innerText = await generateFinalDNKey(ghData.trim() + deviceId);
-                    source.innerHTML = '<span class="source-tag">Cloud Server</span>';
-                    display.style.color = "var(--success)";
-                    return;
+                // GỌI FIREBASE CLOUD FUNCTION (Đây là nơi chứa URL Apps Script thật)
+                // Tên hàm ví dụ là: getSecureKey
+                const getSecureKey = functions.httpsCallable('getSecureKey');
+                
+                const response = await getSecureKey({
+                    id: idMay,
+                    token: token,
+                    ua: navigator.userAgent
+                });
+
+                // Giả lập delay 1s cho chuyên nghiệp
+                await new Promise(r => setTimeout(r, 1000));
+
+                if (response.data.status === "success") {
+                    document.getElementById('finalKey').innerText = response.data.key;
+                    document.getElementById('ui-request').classList.add('hidden');
+                    document.getElementById('ui-result').classList.remove('hidden');
+                } else {
+                    alert("⚠️ Hệ thống từ chối: " + (response.data.info || "Lỗi không xác định"));
+                    resetBtn(btn, btnText, loader);
                 }
-            } catch (e) { console.log("GitHub Offline"); }
-
-            try {
-                // 2. Dự phòng
-                const asResponse = await fetch(FALLBACK_URL + "?id=" + deviceId + "&type=api");
-                let rawKey = await asResponse.text();
-                display.innerText = await generateFinalDNKey(rawKey.trim() + deviceId);
-                source.innerHTML = '<span class="source-tag">Backup System</span>';
             } catch (error) {
-                display.innerText = "LỖI KẾT NỐI - VUI LÒNG THỬ LẠI";
-                display.style.color = "var(--accent)";
+                console.error(error);
+                alert("❌ Lỗi kết nối Firebase Cloud Gateway!");
+                resetBtn(btn, btnText, loader);
             }
         }
 
-        function copyKey() {
-            const keyText = document.getElementById('key-display').innerText;
-            if (keyText.includes("Đang") || keyText.length < 20) return;
-
-            // Sử dụng textarea để hỗ trợ sao chép tốt nhất trên mobile
-            const el = document.createElement('textarea');
-            el.value = keyText;
-            el.setAttribute('readonly', '');
-            el.style.position = 'absolute';
-            el.style.left = '-9999px';
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        function resetBtn(btn, text, loader) {
+            btn.disabled = false;
+            text.innerText = "THỬ LẠI NGAY";
+            loader.classList.add('hidden');
         }
 
-        window.onload = loadKey;
+        function copyToClipboard() {
+            const key = document.getElementById('finalKey').innerText;
+            navigator.clipboard.writeText(key).then(() => {
+                alert("✅ Đã sao chép mã kích hoạt!");
+            });
+        }
     </script>
 </body>
 </html>
-
-
