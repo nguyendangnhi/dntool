@@ -3,23 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNTOOL - SECURE CLOUD GATEWAY</title>
+    <title>DNTOOL - CLOUD VERIFIED</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs (Sử dụng bản Compat để dễ tích hợp nhanh) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
-
     <style>
         :root {
             --bg-color: #06080f;
-            --brand-blue: #3b82f6;
-            --brand-glow: rgba(59, 130, 246, 0.5);
-            --card-glass: rgba(15, 23, 42, 0.9);
+            --brand-glow: rgba(59, 130, 246, 0.4);
         }
-
         body {
             background-color: var(--bg-color);
             color: #f8fafc;
@@ -29,199 +21,92 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden;
         }
-
-        .background-animate {
-            position: absolute;
-            inset: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(30, 64, 175, 0.15) 0%, transparent 50%);
-            z-index: -1;
-        }
-
         .glass-card {
-            background: var(--card-glass);
+            background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             width: 90%;
             max-width: 420px;
             border-radius: 2.5rem;
-            padding: 2.5rem;
+            padding: 3rem;
             box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
         }
-
-        .brand-logo-hex {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
-            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            font-weight: 900;
-            color: white;
-            box-shadow: 0 0 30px var(--brand-glow);
-            transition: transform 0.3s ease;
-        }
-
-        .brand-logo-hex:hover {
-            transform: scale(1.05) rotate(5deg);
-        }
-
-        .btn-request {
+        .btn-main {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             box-shadow: 0 10px 25px -5px var(--brand-glow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .btn-request:hover:not(:disabled) {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        .key-display {
+        .key-box {
             background: rgba(0, 0, 0, 0.4);
-            border: 1px dashed rgba(59, 130, 246, 0.4);
+            border: 1px dashed rgba(59, 130, 246, 0.5);
             font-family: 'JetBrains Mono', monospace;
         }
-
-        .loader {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
-    <div class="background-animate"></div>
-
     <div class="glass-card text-center">
-        <!-- Brand Logo -->
-        <div class="brand-logo-hex">DN</div>
-        
-        <h1 class="text-2xl font-black tracking-tight text-white mb-1 uppercase italic">DNTOOL <span class="text-blue-500 not-italic font-light">PRO</span></h1>
-        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">Cloud Security Verified</p>
+        <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-3xl font-black shadow-lg shadow-blue-500/30">DN</div>
+        <h1 class="text-2xl font-black mb-1 italic">DNTOOL <span class="text-blue-500 not-italic font-light">SYSTEM</span></h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">Worker Proxy Protection</p>
 
-        <!-- Trạng thái chờ -->
-        <div id="ui-request" class="space-y-6">
-            <div class="bg-blue-500/5 border border-blue-500/10 p-4 rounded-2xl">
-                <p class="text-xs text-slate-400 leading-relaxed italic">Vui lòng xác thực thiết bị để nhận mã kích hoạt từ hệ thống đám mây.</p>
-            </div>
-            
-            <button id="btnAction" onclick="fetchKeyViaFirebase()" class="btn-request w-full py-4 rounded-2xl text-white font-extrabold flex items-center justify-center gap-3">
-                <i class="fas fa-fingerprint text-xl"></i>
-                <span id="btnText">XÁC THỰC THIẾT BỊ</span>
-                <div id="loader" class="hidden loader"></div>
+        <div id="step-1">
+            <button onclick="getKey()" id="btnAction" class="btn-main w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform active:scale-95">
+                <i class="fas fa-bolt"></i>
+                <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
             </button>
+            <p class="mt-6 text-[11px] text-slate-500 leading-relaxed italic">Yêu cầu của bạn sẽ được xử lý qua Cloudflare Edge.</p>
         </div>
 
-        <!-- Trạng thái hiện Key -->
-        <div id="ui-result" class="hidden space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="key-display p-5 rounded-2xl text-left">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-[9px] bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-black uppercase">Mã Của Bạn</span>
-                    <i class="fas fa-shield-check text-emerald-500"></i>
-                </div>
-                <div id="finalKey" class="text-white text-sm font-bold break-all mb-4">---</div>
-                <button onclick="copyToClipboard()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold border border-blue-500/20 transition-all text-blue-400">
-                    SAO CHÉP MÃ
+        <div id="step-2" class="hidden animate-in fade-in slide-in-from-bottom-4">
+            <div class="key-box p-5 rounded-2xl text-left">
+                <p class="text-[9px] text-blue-400 font-bold uppercase mb-2">Key của bạn:</p>
+                <div id="resultKey" class="text-sm font-bold text-white break-all mb-4">---</div>
+                <button onclick="copyText()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold text-blue-400 transition-all border border-blue-500/20">
+                    SAO CHÉP NGAY
                 </button>
             </div>
-            <p class="text-[10px] text-slate-600 font-bold uppercase italic">Mã này được bảo mật bởi Firebase Proxy</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-10 pt-6 border-t border-white/5 flex flex-col items-center gap-2">
-            <div class="flex gap-4 text-slate-700">
-                <i class="fab fa-telegram"></i>
-                <i class="fas fa-shield"></i>
-            </div>
-            <p class="text-[9px] text-slate-800 font-black uppercase tracking-widest">Gateway v5.0 Deep-Shield Enabled</p>
         </div>
     </div>
 
     <script>
-        // Cấu hình Firebase (Lấy từ Firebase Console của bạn)
-        const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "dntool-auth.firebaseapp.com",
-            projectId: "dntool-auth",
-            storageBucket: "dntool-auth.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
-        };
+        // Thay bằng URL Worker của bạn
+        const WORKER_URL = "https://your-worker.your-name.workers.dev";
 
-        // Khởi tạo Firebase
-        firebase.initializeApp(firebaseConfig);
-        const functions = firebase.functions();
+        async function getKey() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const token = params.get('token');
 
-        async function fetchKeyViaFirebase() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const idMay = urlParams.get('id');
-            const token = urlParams.get('token');
-
-            if (!idMay) {
-                alert("❌ Lỗi: Không tìm thấy ID máy. Vui lòng mở lại từ App!");
-                return;
-            }
+            if(!id) return alert("Thiếu ID máy!");
 
             const btn = document.getElementById('btnAction');
             const btnText = document.getElementById('btnText');
-            const loader = document.getElementById('loader');
-
             btn.disabled = true;
             btnText.innerText = "ĐANG XÁC THỰC...";
-            loader.classList.remove('hidden');
 
             try {
-                // GỌI FIREBASE CLOUD FUNCTION (Đây là nơi chứa URL Apps Script thật)
-                // Tên hàm ví dụ là: getSecureKey
-                const getSecureKey = functions.httpsCallable('getSecureKey');
-                
-                const response = await getSecureKey({
-                    id: idMay,
-                    token: token,
-                    ua: navigator.userAgent
-                });
+                // Gọi tới Worker (GET)
+                const res = await fetch(`${WORKER_URL}?id=${id}&token=${token}&get_code=true`);
+                const data = await res.json();
 
-                // Giả lập delay 1s cho chuyên nghiệp
-                await new Promise(r => setTimeout(r, 1000));
-
-                if (response.data.status === "success") {
-                    document.getElementById('finalKey').innerText = response.data.key;
-                    document.getElementById('ui-request').classList.add('hidden');
-                    document.getElementById('ui-result').classList.remove('hidden');
+                if(data.status === "success") {
+                    document.getElementById('resultKey').innerText = data.key;
+                    document.getElementById('step-1').classList.add('hidden');
+                    document.getElementById('step-2').classList.remove('hidden');
                 } else {
-                    alert("⚠️ Hệ thống từ chối: " + (response.data.info || "Lỗi không xác định"));
-                    resetBtn(btn, btnText, loader);
+                    alert("Lỗi: " + data.info);
+                    btn.disabled = false;
+                    btnText.innerText = "THỬ LẠI";
                 }
-            } catch (error) {
-                console.error(error);
-                alert("❌ Lỗi kết nối Firebase Cloud Gateway!");
-                resetBtn(btn, btnText, loader);
+            } catch (e) {
+                alert("Không thể kết nối tới Worker!");
+                btn.disabled = false;
             }
         }
 
-        function resetBtn(btn, text, loader) {
-            btn.disabled = false;
-            text.innerText = "THỬ LẠI NGAY";
-            loader.classList.add('hidden');
-        }
-
-        function copyToClipboard() {
-            const key = document.getElementById('finalKey').innerText;
-            navigator.clipboard.writeText(key).then(() => {
-                alert("✅ Đã sao chép mã kích hoạt!");
-            });
+        function copyText() {
+            const key = document.getElementById('resultKey').innerText;
+            navigator.clipboard.writeText(key).then(() => alert("✅ Đã sao chép!"));
         }
     </script>
 </body>
