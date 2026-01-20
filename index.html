@@ -48,6 +48,13 @@
         .animate-in {
             animation: fade-in-up 0.4s ease-out forwards;
         }
+        .honeypot {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
@@ -57,15 +64,18 @@
         
         <!-- Header Section -->
         <h1 class="text-2xl font-black mb-1 italic">DNTOOL <span class="text-blue-500 not-italic font-light">SYSTEM</span></h1>
-        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">Hệ Thống Xác Thực </p>
+        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">Hệ Thống Xác Thực</p>
+
+        <!-- Honeypot Field (hidden trap for bots) -->
+        <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
 
         <!-- Step 1: Action Button -->
         <div id="step-1">
-            <button onclick="getKey()" id="btnAction" class="btn-main w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform active:scale-95">
+            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform active:scale-95">
                 <i class="fas fa-bolt"></i>
                 <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
             </button>
-            <p class="mt-6 text-[11px] text-slate-500 leading-relaxed italic">Yêu cầu của bạn sẽ được xử lý .</p>
+            <p class="mt-6 text-[11px] text-slate-500 leading-relaxed italic">Yêu cầu của bạn sẽ được xử lý an toàn.</p>
         </div>
 
         <!-- Step 2: Result Display -->
@@ -73,7 +83,7 @@
             <div class="key-box p-5 rounded-2xl text-left">
                 <p class="text-[9px] text-blue-400 font-bold uppercase mb-2">Key của bạn:</p>
                 <div id="resultKey" class="text-sm font-bold text-white break-all mb-4">---</div>
-                <button onclick="copyText()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold text-blue-400 transition-all border border-blue-500/20">
+                <button onclick="copyKeyToClipboard()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold text-blue-400 transition-all border border-blue-500/20">
                     SAO CHÉP NGAY
                 </button>
             </div>
@@ -81,362 +91,409 @@
     </div>
 
     <script>
-        // Obfuscated configuration - anti-reverse engineering
-        const _0x1a2b_config = ['aHR0cHM6Ly9kbnRvb2wtd29ya2VyLm5ndXllbmRhbmduaGkxNzA0LndvcmtlcnMuZGV2Lw==', 'ZG50b29sLXNlcnZlcg==', 'bmd1eWVuZGFuZ25oaTE3MDQ=', 'd29ya2Vycw==', 'ZGV2'];
-        const _0x3c4d = function(_0x5e6f, _0x7a8b) { return _0x5e6f.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _0x7a8b)).join(''); };
-        const SERVER_URL = atob(_0x1a2b_config[0]);
-
-        // Military-grade encryption keys (obfuscated)
-        const _0x9f8e = [
-            [0x44^0x11, 0x4e^0x11, 0x54^0x11, 0x4f^0x11, 0x4f^0x11, 0x4c^0x11, 0x5f^0x11, 0x50^0x11],
-            [0x52^0x22, 0x4f^0x22, 0x5f^0x22, 0x53^0x22, 0x45^0x22, 0x43^0x22, 0x55^0x22, 0x52^0x22],
-            [0x45^0x33, 0x5f^0x33, 0x32^0x33, 0x30^0x33, 0x32^0x33, 0x35^0x33, 0x5f^0x33, 0x50^0x33],
-            [0x52^0x44, 0x49^0x44, 0x56^0x44, 0x41^0x44, 0x54^0x44, 0x45^0x44, 0x5f^0x44, 0x53^0x44],
-            [0x45^0x55, 0x52^0x55, 0x56^0x55, 0x45^0x55, 0x52^0x55, 0x5f^0x55, 0x00^0x55, 0x00^0x55]
-        ];
-
-        // Obfuscated auth key - dynamic generation
-        function getAuthKey() {
-            const _0x6b7c = 'TWF0X01hX1NpdV9DYXBfMTIzX2JlX3RhcF9jb2RlX3ZpcF9wcm9fY2hvbmdfaGFja19oYV9oYQ==';
-            const _0x8f9a_key = atob(_0x6b7c);
-            const _0x9d0e_salt = Date.now().toString().slice(-6);
-            return _0x8f9a_key + _0x9d0e_salt;
-        }
-        const AUTH_KEY = getAuthKey();
-
-        function getEncryptionKey() {
-            const _0x2d3e = new Uint8Array(32);
-            let _0x4f5a = 0;
-            
-            for (const _0x7b8c of _0x9f8e) {
-                for (let i = 0; i < _0x7b8c.length; i++) {
-                    _0x2d3e[_0x4f5a + i] = _0x7b8c[i] ^ (0x11 + (_0x4f5a % 4));
-                }
-                _0x4f5a += _0x7b8c.length;
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev/',
+            AUTH_KEY_BASE: 'Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha',
+            RATE_LIMIT: {
+                maxRequests: 5,
+                timeWindow: 60000 // 60 seconds
+            },
+            PROOF_OF_WORK: {
+                difficulty: 4, // Number of leading zeros required in hash
+                enabled: true
             }
-            
-            return _0x2d3e.buffer.slice(0, 32);
-        }
-        
-        // Obfuscated rate limiting
-        const _0x8f9a = {
-            _0x1b2c: [],
-            _0x3d4e: 5,
-            _0x5f6a: 60000
         };
 
-        function _0x7b8c() {
-            const _0x9d0e_currentTime = Date.now();
-            _0x8f9a._0x1b2c = _0x8f9a._0x1b2c.filter(_0x2f3a => _0x9d0e_currentTime - _0x2f3a < _0x8f9a._0x5f6a);
-            
-            if (_0x8f9a._0x1b2c.length >= _0x8f9a._0x3d4e) {
-                const _0x4b5c = Math.min(..._0x8f9a._0x1b2c);
-                const _0x6d7e = _0x8f9a._0x5f6a - (_0x9d0e_currentTime - _0x4b5c);
-                throw new Error(`⏱️ Quá nhiều yêu cầu! Vui lòng đợi ${Math.ceil(_0x6d7e/1000)} giây.`);
-            }
-            
-            _0x8f9a._0x1b2c.push(_0x9d0e_currentTime);
+        // ===== ENCRYPTION KEYS =====
+        const ENCRYPTION_PARTS = [
+            [0x55, 0x5f, 0x64, 0x5f, 0x5f, 0x5c, 0x4f, 0x40], // DNTOOL_P
+            [0x70, 0x6d, 0x7d, 0x71, 0x67, 0x61, 0x77, 0x70], // RO_SECUR
+            [0x76, 0x6c, 0x01, 0x03, 0x01, 0x06, 0x6c, 0x63], // E_2025_P
+            [0x16, 0x0d, 0x12, 0x05, 0x10, 0x01, 0x1b, 0x17], // RIVATE_S
+            [0x20, 0x27, 0x21, 0x20, 0x27, 0x2a, 0x55, 0x55]  // ERVER__
+        ];
+
+        // ===== STATE MANAGEMENT =====
+        const securityState = {
+            requestHistory: [],
+            csrfToken: null,
+            userInteractions: { mouse: 0, keyboard: 0 },
+            sessionStart: Date.now()
+        };
+
+        // ===== UTILITY FUNCTIONS =====
+        function generateAuthKey() {
+            const timestamp = Date.now().toString().slice(-6);
+            return CONFIG.AUTH_KEY_BASE + timestamp;
         }
 
-        // Obfuscated anti-bot detection
-        function _0x1a2b_antibot() {
-            const _0x3c4d = performance.now();
-            let _0x5e6f = 0;
-            let _0x7a8b = 0;
+        function generateEncryptionKey() {
+            const keyBuffer = new Uint8Array(32);
+            let offset = 0;
             
-            document.addEventListener('mousemove', () => _0x5e6f++);
-            document.addEventListener('keydown', () => _0x7a8b++);
-            
-            setTimeout(() => {
-                const _0x9d0e_endTime = performance.now();
-                const _0x2f3a = _0x9d0e_endTime - _0x3c4d;
-                
-                if (_0x2f3a < 1000 || (_0x5e6f === 0 && _0x7a8b === 0)) {
-                    console.warn('Bot activity detected');
-                    return false;
+            for (const part of ENCRYPTION_PARTS) {
+                for (let i = 0; i < part.length; i++) {
+                    keyBuffer[offset + i] = part[i] ^ (0x11 + (offset % 4));
                 }
-                return true;
-            }, 2000);
+                offset += part.length;
+            }
+            
+            return keyBuffer.buffer.slice(0, 32);
+        }
+
+        function generateCSRFToken() {
+            const randomBytes = new Uint8Array(32);
+            crypto.getRandomValues(randomBytes);
+            return btoa(String.fromCharCode(...randomBytes));
+        }
+
+        function generateRequestId() {
+            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // ===== DEVICE FINGERPRINTING =====
+        function getDeviceFingerprint() {
+            let deviceId = localStorage.getItem('device_id');
+            
+            if (!deviceId) {
+                let canvasHash = '';
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.textBaseline = 'top';
+                        ctx.font = '14px Arial';
+                        ctx.fillText('Device fingerprint', 2, 2);
+                        canvasHash = canvas.toDataURL();
+                    }
+                } catch (e) {
+                    canvasHash = crypto.randomUUID();
+                }
+                
+                deviceId = 'DEVICE_' + btoa((canvasHash || 'fallback') + Date.now()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+                localStorage.setItem('device_id', deviceId);
+            }
+            
+            return deviceId;
+        }
+
+        // ===== RATE LIMITING =====
+        function checkRateLimit() {
+            const currentTime = Date.now();
+            securityState.requestHistory = securityState.requestHistory.filter(
+                timestamp => currentTime - timestamp < CONFIG.RATE_LIMIT.timeWindow
+            );
+            
+            if (securityState.requestHistory.length >= CONFIG.RATE_LIMIT.maxRequests) {
+                const oldestRequest = Math.min(...securityState.requestHistory);
+                const waitTime = CONFIG.RATE_LIMIT.timeWindow - (currentTime - oldestRequest);
+                throw new Error(`⏱️ Quá nhiều yêu cầu! Vui lòng đợi ${Math.ceil(waitTime/1000)} giây.`);
+            }
+            
+            securityState.requestHistory.push(currentTime);
+        }
+
+        // ===== ANTI-BOT DETECTION =====
+        function detectBotActivity() {
+            const sessionDuration = Date.now() - securityState.sessionStart;
+            
+            // Check honeypot
+            const honeypotField = document.getElementById('website');
+            if (honeypotField && honeypotField.value.trim() !== '') {
+                console.warn('Honeypot triggered - bot detected');
+                return false;
+            }
+            
+            // Check user interactions
+            if (sessionDuration < 1000) {
+                console.warn('Request too fast - possible bot');
+                return false;
+            }
+            
+            if (sessionDuration > 2000 && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
+                console.warn('No user interactions detected');
+                return false;
+            }
             
             return true;
         }
 
-        // Obfuscated CSRF protection
-        function _0x4b5c() {
-            const _0x6d7e = new Uint8Array(32);
-            crypto.getRandomValues(_0x6d7e);
-            return btoa(String.fromCharCode(..._0x6d7e));
-        }
-
-        let _0x8f9a_token = _0x4b5c();
-
-        // Obfuscated device ID generation với fingerprinting
-        function _0x9d0e_deviceId() {
-            let _0x2f3a = localStorage.getItem('device_id');
-            if (!_0x2f3a) {
-                let _0x7a8b = '';
-                try {
-                    const _0x3c4d = document.createElement('canvas');
-                    const _0x5e6f = _0x3c4d.getContext('2d');
-                    if (_0x5e6f) {
-                        _0x5e6f.textBaseline = 'top';
-                        _0x5e6f.font = '14px Arial';
-                        _0x5e6f.fillText('Device fingerprint', 2, 2);
-                        _0x7a8b = _0x3c4d.toDataURL();
-                    }
-                } catch (e) {
-                    // Fallback for browsers that block canvas
-                    _0x7a8b = crypto.randomUUID();
-                }
-                
-                _0x2f3a = 'DEVICE_' + btoa((_0x7a8b || 'fallback') + Date.now()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
-                localStorage.setItem('device_id', _0x2f3a);
+        // ===== PROOF OF WORK =====
+        async function generateProofOfWork(challenge) {
+            if (!CONFIG.PROOF_OF_WORK.enabled) {
+                return 'disabled';
             }
-            return _0x2f3a;
+
+            const difficulty = CONFIG.PROOF_OF_WORK.difficulty;
+            const target = '0'.repeat(difficulty);
+            let nonce = 0;
+            let hash = '';
+
+            while (true) {
+                const input = challenge + nonce;
+                const encoder = new TextEncoder();
+                const data = encoder.encode(input);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                if (hash.startsWith(target)) {
+                    return { nonce, hash };
+                }
+
+                nonce++;
+
+                // Prevent infinite loop
+                if (nonce > 1000000) {
+                    throw new Error('Proof of work timeout');
+                }
+            }
         }
 
-        // Obfuscated AES-GCM encryption
-        async function _0x2f3a(_0x3c4d) {
+        // ===== ENCRYPTION =====
+        async function encryptPayload(data) {
             try {
-                const _0x5e6f = new TextEncoder();
-                const _0x7a8b = getEncryptionKey();
+                const encoder = new TextEncoder();
+                const keyBuffer = generateEncryptionKey();
                 
-                const _0x9d0e = await crypto.subtle.importKey(
+                const cryptoKey = await crypto.subtle.importKey(
                     'raw',
-                    _0x7a8b,
+                    keyBuffer,
                     { name: 'AES-GCM' },
                     false,
                     ['encrypt']
                 );
 
-                const _0x1b2c = crypto.getRandomValues(new Uint8Array(12));
-                const _0x3d4e = await crypto.subtle.encrypt(
-                    { name: 'AES-GCM', iv: _0x1b2c },
-                    _0x9d0e,
-                    _0x5e6f.encode(_0x3c4d)
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    cryptoKey,
+                    encoder.encode(data)
                 );
 
-                const _0x5f6a = new Uint8Array(_0x1b2c.length + _0x3d4e.byteLength);
-                _0x5f6a.set(_0x1b2c, 0);
-                _0x5f6a.set(new Uint8Array(_0x3d4e), _0x1b2c.length);
+                const combined = new Uint8Array(iv.length + encrypted.byteLength);
+                combined.set(iv, 0);
+                combined.set(new Uint8Array(encrypted), iv.length);
 
-                return btoa(String.fromCharCode(..._0x5f6a));
-            } catch (_0x6d7e) {
-                console.error('Encryption error:', _0x6d7e);
-                throw _0x6d7e;
+                return btoa(String.fromCharCode(...combined));
+            } catch (error) {
+                console.error('Encryption error:', error);
+                throw error;
             }
         }
 
-        // Obfuscated HMAC signature
-        async function _0x4b5c_hmac(_0x8f9a, _0x9d0e, _0x2f3a) {
-            const _0x3c4d = new TextEncoder();
-            const _0x5e6f = _0x3c4d.encode(AUTH_KEY);
+        // ===== HMAC SIGNATURE =====
+        async function generateHMACSignature(timestamp, deviceId, payload) {
+            const encoder = new TextEncoder();
+            const authKey = generateAuthKey();
+            const keyData = encoder.encode(authKey);
             
-            const _0x7a8b = await crypto.subtle.importKey(
+            const cryptoKey = await crypto.subtle.importKey(
                 'raw',
-                _0x5e6f,
+                keyData,
                 { name: 'HMAC', hash: 'SHA-256' },
                 false,
                 ['sign']
             );
 
-            const _0x1b2c = `${_0x8f9a}:${_0x9d0e}:${JSON.stringify(_0x2f3a)}`;
-            const _0x3d4e = _0x3c4d.encode(_0x1b2c);
+            const message = `${timestamp}:${deviceId}:${JSON.stringify(payload)}`;
+            const messageData = encoder.encode(message);
             
-            const _0x5f6a = await crypto.subtle.sign('HMAC', _0x7a8b, _0x3d4e);
-            return btoa(String.fromCharCode(...new Uint8Array(_0x5f6a)));
+            const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+            return btoa(String.fromCharCode(...new Uint8Array(signature)));
         }
 
-        // Obfuscated endpoint signature
-        function _0x6d7e(_0x8f9a, _0x9d0e, _0x2f3a) {
-            const _0x3c4d = `${_0x8f9a}:${_0x9d0e}:${_0x2f3a}`;
-            const _0x5e6f = new TextEncoder();
-            const _0x7a8b = _0x5e6f.encode(_0x3c4d);
-            return btoa(String.fromCharCode(..._0x7a8b.slice(0, 32)));
+        // ===== ENDPOINT SIGNATURE =====
+        function generateEndpointSignature(endpoint, timestamp, deviceId) {
+            const combined = `${endpoint}:${timestamp}:${deviceId}`;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(combined);
+            return btoa(String.fromCharCode(...data.slice(0, 32)));
         }
 
-        async function getKey() {
-            const _0x1a2b = new URLSearchParams(window.location.search);
-            const _0x3c4d = _0x1a2b.get('id');
-            const _0x5e6f = _0x1a2b.get('token');
+        // ===== MAIN REQUEST FUNCTION =====
+        async function initiateKeyRequest() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            const userToken = urlParams.get('token');
 
-            if(!_0x3c4d) {
+            if (!userId) {
                 alert("❌ Lỗi: Không tìm thấy thông tin!\n\nVui lòng truy cập từ app để sử dụng dịch vụ.");
                 return;
             }
 
-            const _0x7a8b = document.getElementById('btnAction');
-            const _0x9d0e = document.getElementById('btnText');
+            const btnAction = document.getElementById('btnAction');
+            const btnText = document.getElementById('btnText');
             
-            _0x7a8b.disabled = true;
-            _0x9d0e.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...';
+            btnAction.disabled = true;
+            btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...';
 
             try {
-                // Anti-DDoS: Rate limiting
-                _0x7b8c();
+                // Security checks
+                checkRateLimit();
                 
-                // Anti-bot detection
-                if (!_0x1a2b_antibot()) {
+                if (!detectBotActivity()) {
                     throw new Error('🤖 Phát hiện hoạt động bất thường.\n\nVui lòng thử lại sau vài giây.');
                 }
 
-                const _0x2f3a_deviceId = _0x9d0e_deviceId();
-                const _0x3c4d_timestamp = Date.now().toString();
-                const _0x5e6f_endpoint = '/security/validate_key';
+                // Generate security tokens
+                const deviceId = getDeviceFingerprint();
+                const timestamp = Date.now().toString();
+                const endpoint = '/security/validate_key';
+                
+                if (!securityState.csrfToken) {
+                    securityState.csrfToken = generateCSRFToken();
+                }
 
-                // Chuẩn bị dữ liệu mã hóa với CSRF protection
-                const _0x7a8b_payload = {
+                // Generate proof of work
+                btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
+                const powChallenge = timestamp + deviceId;
+                const proofOfWork = await generateProofOfWork(powChallenge);
+
+                // Prepare payload (NO IP ADDRESS - server will detect it)
+                const payload = {
                     action: 'validate_key',
                     module: 'security',
-                    key_input: _0x5e6f || 'DEMO-KEY-12345',
-                    device_id: _0x2f3a_deviceId,
-                    ip_address: await _0x3d4e(),
-                    csrf_token: _0x8f9a_token,
+                    key_input: userToken || 'DEMO-KEY-12345',
+                    device_id: deviceId,
+                    csrf_token: securityState.csrfToken,
                     user_agent: navigator.userAgent,
-                    timestamp: _0x3c4d_timestamp
+                    timestamp: timestamp,
+                    proof_of_work: proofOfWork
                 };
 
-                // Mã hóa dữ liệu
-                const _0x9d0e_encrypted = await _0x2f3a(JSON.stringify(_0x7a8b_payload));
+                // Encrypt payload
+                const encryptedData = await encryptPayload(JSON.stringify(payload));
 
-                // Tạo signatures
-                const _0x2f3a_signature = await _0x4b5c_hmac(_0x3c4d_timestamp, _0x2f3a_deviceId, { data: _0x9d0e_encrypted, endpoint: _0x5e6f_endpoint, timestamp: _0x3c4d_timestamp });
-                const _0x3c4d_endpointSig = _0x6d7e(_0x5e6f_endpoint, _0x3c4d_timestamp, _0x2f3a_deviceId);
+                // Generate signatures
+                const hmacSignature = await generateHMACSignature(timestamp, deviceId, { 
+                    data: encryptedData, 
+                    endpoint: endpoint, 
+                    timestamp: timestamp 
+                });
+                const endpointSignature = generateEndpointSignature(endpoint, timestamp, deviceId);
 
-                // Gọi server mới với military-grade security
-                const _0x7a8b_response = await fetch(SERVER_URL, {
+                // Send request to server
+                btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...';
+                const response = await fetch(CONFIG.SERVER_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Timestamp': _0x3c4d_timestamp,
-                        'X-Device-ID': _0x2f3a_deviceId,
-                        'X-Signature': _0x2f3a_signature,
-                        'X-Endpoint-Signature': _0x3c4d_endpointSig,
-                        'X-CSRF-Token': _0x8f9a_token,
+                        'X-Timestamp': timestamp,
+                        'X-Device-ID': deviceId,
+                        'X-Signature': hmacSignature,
+                        'X-Endpoint-Signature': endpointSignature,
+                        'X-CSRF-Token': securityState.csrfToken,
                         'X-User-Agent': btoa(navigator.userAgent),
-                        'X-Request-ID': _0x5f6a()
+                        'X-Request-ID': generateRequestId()
                     },
-                    body: JSON.stringify({ data: _0x9d0e_encrypted, endpoint: _0x5e6f_endpoint, timestamp: _0x3c4d_timestamp, csrf_token: _0x8f9a_token })
+                    body: JSON.stringify({ 
+                        data: encryptedData, 
+                        endpoint: endpoint, 
+                        timestamp: timestamp, 
+                        csrf_token: securityState.csrfToken 
+                    })
                 });
                 
-                if (!_0x7a8b_response.ok) {
-                    if (_0x7a8b_response.status === 429) {
+                if (!response.ok) {
+                    if (response.status === 429) {
                         throw new Error('⏱️ Quá nhiều yêu cầu!\n\nVui lòng đợi 1 phút rồi thử lại.');
-                    } else if (_0x7a8b_response.status === 403) {
+                    } else if (response.status === 403) {
                         throw new Error('🚫 Truy cập bị từ chối!\n\nXác thực bảo mật thất bại. Vui lòng kiểm tra lại.');
                     }
-                    throw new Error(`❌ Lỗi server: ${_0x7a8b_response.status}\n\nVui lòng thử lại sau.`);
+                    throw new Error(`❌ Lỗi server: ${response.status}\n\nVui lòng thử lại sau.`);
                 }
                 
-                const _0x9d0e_result = await _0x7a8b_response.json();
+                const result = await response.json();
 
-                if(_0x9d0e_result.success && _0x9d0e_result.data) {
-                    document.getElementById('resultKey').innerText = _0x9d0e_result.data.key || 'ACTIVE-USER-' + _0x2f3a_deviceId.slice(-8);
+                if (result.success && result.data) {
+                    document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceId.slice(-8);
                     document.getElementById('step-1').classList.add('hidden');
                     document.getElementById('step-2').classList.remove('hidden');
                     
-                    // Regenerate CSRF token sau khi success
-                    _0x8f9a_token = _0x4b5c();
+                    // Regenerate CSRF token
+                    securityState.csrfToken = generateCSRFToken();
                 } else {
-                    const errorMsg = _0x9d0e_result.error || "Lỗi không xác định";
+                    const errorMsg = result.error || "Lỗi không xác định";
                     alert("❌ Yêu cầu bị từ chối!\n\n" + errorMsg + "\n\nVui lòng kiểm tra lại thông tin và thử lại.");
-                    _0x7a8b.disabled = false;
-                    _0x9d0e.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                    btnAction.disabled = false;
+                    btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
                 }
-            } catch (_0x2f3a_error) {
-                console.error('Security error:', _0x2f3a_error);
-                alert("❌ Lỗi bảo mật:\n\n" + _0x2f3a_error.message);
-                _0x7a8b.disabled = false;
-                _0x9d0e.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+            } catch (error) {
+                console.error('Security error:', error);
+                alert("❌ Lỗi bảo mật:\n\n" + error.message);
+                btnAction.disabled = false;
+                btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
             }
         }
 
-        // Generate unique request ID
-        function _0x5f6a() {
-            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        // Obfuscated IP client function - supports both HTTP/HTTPS
-        async function _0x3d4e() {
-            try {
-                // Try HTTPS first, fallback to HTTP if needed
-                const _0x1a2b_protocols = ['https://api.ipify.org?format=json', 'http://api.ipify.org?format=json'];
-                
-                for (const _0x3c4d_url of _0x1a2b_protocols) {
-                    try {
-                        const _0x5e6f_response = await fetch(_0x3c4d_url);
-                        const _0x7a8b_data = await _0x5e6f_response.json();
-                        return _0x7a8b_data.ip;
-                    } catch (e) {
-                        continue; // Try next protocol
-                    }
-                }
-                
-                // Fallback to local detection if all APIs fail
-                return '127.0.0.1';
-            } catch {
-                return '127.0.0.1';
-            }
-        }
-
-        // Obfuscated copy functions
-        function copyText() {
-            const _0x1a2b = document.getElementById('resultKey').innerText;
-            if (_0x1a2b === '---') return;
+        // ===== CLIPBOARD FUNCTIONS =====
+        function copyKeyToClipboard() {
+            const keyText = document.getElementById('resultKey').innerText;
+            if (keyText === '---') return;
             
-            // Sử dụng Clipboard API modern
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(_0x1a2b).then(() => {
+                navigator.clipboard.writeText(keyText).then(() => {
                     alert("✅ Đã sao chép mã Key!");
                 }).catch(() => {
-                    _0x3c4d_copy(_0x1a2b);
+                    fallbackCopy(keyText);
                 });
             } else {
-                _0x3c4d_copy(_0x1a2b);
+                fallbackCopy(keyText);
             }
         }
 
-        function _0x3c4d_copy(_0x5e6f) {
-            const _0x7a8b = document.createElement('textarea');
-            _0x7a8b.value = _0x5e6f;
-            document.body.appendChild(_0x7a8b);
-            _0x7a8b.select();
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
             document.execCommand('copy');
-            document.body.removeChild(_0x7a8b);
+            document.body.removeChild(textarea);
             alert("✅ Đã sao chép mã Key!");
         }
 
-        // Anti-debug và console protection
-        // Note: Chỉ ngăn cản người dùng phổ thông, chuyên viên có thể bypass
+        // ===== SECURITY PROTECTIONS =====
+        
+        // Track user interactions
+        document.addEventListener('mousemove', () => securityState.userInteractions.mouse++);
+        document.addEventListener('keydown', () => securityState.userInteractions.keyboard++);
+
+        // Anti-debug protection (enhanced)
         (function() {
-            const _0x9d0e_debug = () => {
+            const debugProtection = function() {
                 debugger;
             };
-            // Giảm tần suất để tránh ảnh hưởng hiệu suất
+            
             setInterval(() => {
-                _0x9d0e_debug();
-            }, 5000);
-            
-            // Disable right click
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            
-            // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
-            document.addEventListener('keydown', e => {
-                if (e.key === 'F12' || 
-                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-                    (e.ctrlKey && e.key === 'u')) {
-                    e.preventDefault();
-                }
-            });
+                debugProtection();
+            }, 3000);
         })();
 
-        // Anti-tampering check
-        setInterval(() => {
-            if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
-                document.body.innerHTML = '<h1>Developer tools detected!</h1>';
+        // Disable right click
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Disable common dev shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
             }
-        }, 1000);
+        });
+
+        // Console protection
+        const consoleProtection = setInterval(() => {
+            console.clear();
+        }, 5000);
+
+        // Initialize CSRF token on load
+        window.addEventListener('load', () => {
+            securityState.csrfToken = generateCSRFToken();
+        });
     </script>
 </body>
 </html>
-
