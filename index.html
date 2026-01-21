@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DNTOOL - CLOUD VERIFIED</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
@@ -35,6 +36,12 @@
         .btn-main {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             box-shadow: 0 10px 25px -5px var(--brand-glow);
+            color: white;
+            cursor: pointer;
+        }
+        .btn-main:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         .key-box {
             background: rgba(0, 0, 0, 0.4);
@@ -55,35 +62,52 @@
             height: 1px;
             opacity: 0;
         }
+        .turnstile-container {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="glass-card text-center">
         <!-- Logo Section -->
-        <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-3xl font-black shadow-lg shadow-blue-500/30">DN</div>
+        <div style="width: 4rem; height: 4rem; background-color: #2563eb; border-radius: 1rem; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.875rem; font-weight: 900; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);">DN</div>
         
         <!-- Header Section -->
-        <h1 class="text-2xl font-black mb-1 italic">DNTOOL <span class="text-blue-500 not-italic font-light">SYSTEM</span></h1>
-        <p class="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-10 font-bold">Hệ Thống Xác Thực</p>
+        <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">SYSTEM</span></h1>
+        <p style="font-size: 0.625rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
         <!-- Honeypot Field (hidden trap for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
 
         <!-- Step 1: Action Button -->
         <div id="step-1">
-            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-transform active:scale-95">
+            <!-- Cloudflare Turnstile Widget -->
+            <div class="turnstile-container">
+                <div class="cf-turnstile" 
+                     data-sitekey="0x4AAAAAACNwFP1me9pXoX_D" 
+                     data-callback="onTurnstileSuccess"
+                     data-error-callback="onTurnstileError"
+                     data-theme="dark"></div>
+            </div>
+
+            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 1rem; border-radius: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: transform 0.2s; border: none;">
                 <i class="fas fa-bolt"></i>
                 <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
             </button>
-            <p class="mt-6 text-[11px] text-slate-500 leading-relaxed italic">Yêu cầu của bạn sẽ được xử lý an toàn.</p>
+            <p style="margin-top: 1.5rem; font-size: 0.6875rem; color: #64748b; line-height: 1.625; font-style: italic;">Yêu cầu của bạn sẽ được xử lý an toàn.</p>
         </div>
 
         <!-- Step 2: Result Display -->
         <div id="step-2" class="hidden animate-in">
-            <div class="key-box p-5 rounded-2xl text-left">
-                <p class="text-[9px] text-blue-400 font-bold uppercase mb-2">Key của bạn:</p>
-                <div id="resultKey" class="text-sm font-bold text-white break-all mb-4">---</div>
-                <button onclick="copyKeyToClipboard()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 py-3 rounded-xl text-xs font-bold text-blue-400 transition-all border border-blue-500/20">
+            <div class="key-box" style="padding: 1.25rem; border-radius: 1rem; text-align: left;">
+                <p style="font-size: 0.5625rem; color: #60a5fa; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">Key của bạn:</p>
+                <div id="resultKey" style="font-size: 0.875rem; font-weight: 700; color: white; word-break: break-all; margin-bottom: 1rem;">---</div>
+                <button onclick="copyKeyToClipboard()" style="width: 100%; background-color: rgba(59, 130, 246, 0.1); padding: 0.75rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; color: #60a5fa; transition: all 0.2s; border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer;">
                     SAO CHÉP NGAY
                 </button>
             </div>
@@ -94,54 +118,40 @@
         // ===== CONFIGURATION =====
         const CONFIG = {
             SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev/',
-            AUTH_KEY_BASE: 'Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha',
             RATE_LIMIT: {
                 maxRequests: 5,
                 timeWindow: 60000 // 60 seconds
             },
             PROOF_OF_WORK: {
-                difficulty: 4, // Number of leading zeros required in hash
+                difficulty: 4,
                 enabled: true
-            }
+            },
+            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D'
         };
-
-        // ===== ENCRYPTION KEYS =====
-        const ENCRYPTION_PARTS = [
-            [0x55, 0x5f, 0x64, 0x5f, 0x5f, 0x5c, 0x4f, 0x40], // DNTOOL_P
-            [0x70, 0x6d, 0x7d, 0x71, 0x67, 0x61, 0x77, 0x70], // RO_SECUR
-            [0x76, 0x6c, 0x01, 0x03, 0x01, 0x06, 0x6c, 0x63], // E_2025_P
-            [0x16, 0x0d, 0x12, 0x05, 0x10, 0x01, 0x1b, 0x17], // RIVATE_S
-            [0x20, 0x27, 0x21, 0x20, 0x27, 0x2a, 0x55, 0x55]  // ERVER__
-        ];
 
         // ===== STATE MANAGEMENT =====
         const securityState = {
             requestHistory: [],
             csrfToken: null,
             userInteractions: { mouse: 0, keyboard: 0 },
-            sessionStart: Date.now()
+            sessionStart: Date.now(),
+            turnstileToken: null,
+            turnstileVerified: false
         };
 
+        // ===== TURNSTILE CALLBACKS =====
+        function onTurnstileSuccess(token) {
+            securityState.turnstileToken = token;
+            securityState.turnstileVerified = true;
+        }
+
+        function onTurnstileError() {
+            securityState.turnstileToken = null;
+            securityState.turnstileVerified = false;
+            alert("❌ Lỗi xác thực Turnstile!\n\nVui lòng tải lại trang và thử lại.");
+        }
+
         // ===== UTILITY FUNCTIONS =====
-        function generateAuthKey() {
-            const timestamp = Date.now().toString().slice(-6);
-            return CONFIG.AUTH_KEY_BASE + timestamp;
-        }
-
-        function generateEncryptionKey() {
-            const keyBuffer = new Uint8Array(32);
-            let offset = 0;
-            
-            for (const part of ENCRYPTION_PARTS) {
-                for (let i = 0; i < part.length; i++) {
-                    keyBuffer[offset + i] = part[i] ^ (0x11 + (offset % 4));
-                }
-                offset += part.length;
-            }
-            
-            return keyBuffer.buffer.slice(0, 32);
-        }
-
         function generateCSRFToken() {
             const randomBytes = new Uint8Array(32);
             crypto.getRandomValues(randomBytes);
@@ -198,21 +208,16 @@
         function detectBotActivity() {
             const sessionDuration = Date.now() - securityState.sessionStart;
             
-            // Check honeypot
             const honeypotField = document.getElementById('website');
             if (honeypotField && honeypotField.value.trim() !== '') {
-                console.warn('Honeypot triggered - bot detected');
                 return false;
             }
             
-            // Check user interactions
             if (sessionDuration < 1000) {
-                console.warn('Request too fast - possible bot');
                 return false;
             }
             
             if (sessionDuration > 2000 && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
-                console.warn('No user interactions detected');
                 return false;
             }
             
@@ -244,64 +249,10 @@
 
                 nonce++;
 
-                // Prevent infinite loop
                 if (nonce > 1000000) {
                     throw new Error('Proof of work timeout');
                 }
             }
-        }
-
-        // ===== ENCRYPTION =====
-        async function encryptPayload(data) {
-            try {
-                const encoder = new TextEncoder();
-                const keyBuffer = generateEncryptionKey();
-                
-                const cryptoKey = await crypto.subtle.importKey(
-                    'raw',
-                    keyBuffer,
-                    { name: 'AES-GCM' },
-                    false,
-                    ['encrypt']
-                );
-
-                const iv = crypto.getRandomValues(new Uint8Array(12));
-                const encrypted = await crypto.subtle.encrypt(
-                    { name: 'AES-GCM', iv: iv },
-                    cryptoKey,
-                    encoder.encode(data)
-                );
-
-                const combined = new Uint8Array(iv.length + encrypted.byteLength);
-                combined.set(iv, 0);
-                combined.set(new Uint8Array(encrypted), iv.length);
-
-                return btoa(String.fromCharCode(...combined));
-            } catch (error) {
-                console.error('Encryption error:', error);
-                throw error;
-            }
-        }
-
-        // ===== HMAC SIGNATURE =====
-        async function generateHMACSignature(timestamp, deviceId, payload) {
-            const encoder = new TextEncoder();
-            const authKey = generateAuthKey();
-            const keyData = encoder.encode(authKey);
-            
-            const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyData,
-                { name: 'HMAC', hash: 'SHA-256' },
-                false,
-                ['sign']
-            );
-
-            const message = `${timestamp}:${deviceId}:${JSON.stringify(payload)}`;
-            const messageData = encoder.encode(message);
-            
-            const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-            return btoa(String.fromCharCode(...new Uint8Array(signature)));
         }
 
         // ===== ENDPOINT SIGNATURE =====
@@ -323,6 +274,12 @@
                 return;
             }
 
+            // Check Turnstile verification
+            if (!securityState.turnstileVerified || !securityState.turnstileToken) {
+                alert("❌ Vui lòng xác thực bạn không phải là robot!");
+                return;
+            }
+
             const btnAction = document.getElementById('btnAction');
             const btnText = document.getElementById('btnText');
             
@@ -330,14 +287,12 @@
             btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...';
 
             try {
-                // Security checks
                 checkRateLimit();
                 
                 if (!detectBotActivity()) {
                     throw new Error('🤖 Phát hiện hoạt động bất thường.\n\nVui lòng thử lại sau vài giây.');
                 }
 
-                // Generate security tokens
                 const deviceId = getDeviceFingerprint();
                 const timestamp = Date.now().toString();
                 const endpoint = '/security/validate_key';
@@ -346,12 +301,10 @@
                     securityState.csrfToken = generateCSRFToken();
                 }
 
-                // Generate proof of work
                 btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
                 const powChallenge = timestamp + deviceId;
                 const proofOfWork = await generateProofOfWork(powChallenge);
 
-                // Prepare payload (NO IP ADDRESS - server will detect it)
                 const payload = {
                     action: 'validate_key',
                     module: 'security',
@@ -360,40 +313,19 @@
                     csrf_token: securityState.csrfToken,
                     user_agent: navigator.userAgent,
                     timestamp: timestamp,
-                    proof_of_work: proofOfWork
+                    proof_of_work: proofOfWork,
+                    turnstile_token: securityState.turnstileToken,
+                    endpoint: endpoint
                 };
 
-                // Encrypt payload
-                const encryptedData = await encryptPayload(JSON.stringify(payload));
-
-                // Generate signatures
-                const hmacSignature = await generateHMACSignature(timestamp, deviceId, { 
-                    data: encryptedData, 
-                    endpoint: endpoint, 
-                    timestamp: timestamp 
-                });
-                const endpointSignature = generateEndpointSignature(endpoint, timestamp, deviceId);
-
-                // Send request to server
                 btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...';
                 const response = await fetch(CONFIG.SERVER_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Timestamp': timestamp,
-                        'X-Device-ID': deviceId,
-                        'X-Signature': hmacSignature,
-                        'X-Endpoint-Signature': endpointSignature,
-                        'X-CSRF-Token': securityState.csrfToken,
-                        'X-User-Agent': btoa(navigator.userAgent),
-                        'X-Request-ID': generateRequestId()
+                        'X-Device-ID': deviceId
                     },
-                    body: JSON.stringify({ 
-                        data: encryptedData, 
-                        endpoint: endpoint, 
-                        timestamp: timestamp, 
-                        csrf_token: securityState.csrfToken 
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
@@ -412,7 +344,6 @@
                     document.getElementById('step-1').classList.add('hidden');
                     document.getElementById('step-2').classList.remove('hidden');
                     
-                    // Regenerate CSRF token
                     securityState.csrfToken = generateCSRFToken();
                 } else {
                     const errorMsg = result.error || "Lỗi không xác định";
@@ -421,7 +352,6 @@
                     btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
                 }
             } catch (error) {
-                console.error('Security error:', error);
                 alert("❌ Lỗi bảo mật:\n\n" + error.message);
                 btnAction.disabled = false;
                 btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
@@ -457,26 +387,11 @@
         }
 
         // ===== SECURITY PROTECTIONS =====
-        
-        // Track user interactions
         document.addEventListener('mousemove', () => securityState.userInteractions.mouse++);
         document.addEventListener('keydown', () => securityState.userInteractions.keyboard++);
 
-        // Anti-debug protection (enhanced)
-        (function() {
-            const debugProtection = function() {
-                debugger;
-            };
-            
-            setInterval(() => {
-                debugProtection();
-            }, 3000);
-        })();
-
-        // Disable right click
         document.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Disable common dev shortcuts
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || 
                 (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
@@ -485,12 +400,6 @@
             }
         });
 
-        // Console protection
-        const consoleProtection = setInterval(() => {
-            console.clear();
-        }, 5000);
-
-        // Initialize CSRF token on load
         window.addEventListener('load', () => {
             securityState.csrfToken = generateCSRFToken();
         });
