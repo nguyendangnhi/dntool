@@ -126,7 +126,8 @@
                 difficulty: 4,
                 enabled: true
             },
-            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D'
+            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
+            ENDPOINT_SIGNATURE_SECRET: 'DNTOOL-SIGNATURE-SECRET-2024' // Must match server
         };
 
         // ===== STATE MANAGEMENT =====
@@ -256,11 +257,28 @@
         }
 
         // ===== ENDPOINT SIGNATURE =====
-        function generateEndpointSignature(endpoint, timestamp, deviceId) {
+        async function generateEndpointSignature(endpoint, timestamp, deviceId) {
+            const secret = CONFIG.ENDPOINT_SIGNATURE_SECRET;
             const combined = `${endpoint}:${timestamp}:${deviceId}`;
+            
             const encoder = new TextEncoder();
-            const data = encoder.encode(combined);
-            return btoa(String.fromCharCode(...data.slice(0, 32)));
+            const keyData = encoder.encode(secret);
+            const messageData = encoder.encode(combined);
+            
+            const cryptoKey = await crypto.subtle.importKey(
+                'raw',
+                keyData,
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+            
+            const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+            const signature = Array.from(new Uint8Array(signatureBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            
+            return signature;
         }
 
         // ===== MAIN REQUEST FUNCTION =====
@@ -295,7 +313,7 @@
 
                 const deviceId = getDeviceFingerprint();
                 const timestamp = Date.now().toString();
-                const endpoint = '/security/validate_key';
+                const endpoint = '/github/generate_24h_key';
                 
                 if (!securityState.csrfToken) {
                     securityState.csrfToken = generateCSRFToken();
@@ -304,10 +322,13 @@
                 btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
                 const powChallenge = timestamp + deviceId;
                 const proofOfWork = await generateProofOfWork(powChallenge);
+                
+                // Generate endpoint signature
+                const endpointSignature = await generateEndpointSignature(endpoint, timestamp, deviceId);
 
                 const payload = {
-                    action: 'validate_key',
-                    module: 'security',
+                    action: 'generate_24h_key',
+                    module: 'github',
                     key_input: userToken || 'DEMO-KEY-12345',
                     device_id: deviceId,
                     csrf_token: securityState.csrfToken,
@@ -315,7 +336,8 @@
                     timestamp: timestamp,
                     proof_of_work: proofOfWork,
                     turnstile_token: securityState.turnstileToken,
-                    endpoint: endpoint
+                    endpoint: endpoint,
+                    endpoint_signature: endpointSignature
                 };
 
                 btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...';
