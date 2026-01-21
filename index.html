@@ -127,7 +127,7 @@
                 enabled: true
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
-            ENDPOINT_SIGNATURE_SECRET: 'DNTOOL-SIGNATURE-SECRET-2024' // Must match server
+            APP_SESSION_ID: 'DN-2024-V1' // Must match server
         };
 
         // ===== STATE MANAGEMENT =====
@@ -258,7 +258,7 @@
 
         // ===== ENDPOINT SIGNATURE =====
         async function generateEndpointSignature(endpoint, timestamp, deviceId) {
-            const secret = CONFIG.ENDPOINT_SIGNATURE_SECRET;
+            const secret = CONFIG.APP_SESSION_ID;
             const combined = `${endpoint}:${timestamp}:${deviceId}`;
             
             const encoder = new TextEncoder();
