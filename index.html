@@ -145,14 +145,8 @@
         <div style="width: 4rem; height: 4rem; background-color: #2563eb; border-radius: 1rem; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.875rem; font-weight: 900; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);">DN</div>
         
         <!-- Header Section -->
-        <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">SYSTEM</span></h1>
+        <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">PRO</span></h1>
         <p style="font-size: 0.625rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
-
-        <!-- Status Indicator -->
-        <div id="statusIndicator" class="status-indicator status-idle">
-            <i class="fas fa-info-circle"></i>
-            <span>Sẵn sàng</span>
-        </div>
 
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
@@ -183,7 +177,7 @@
                 <i id="btnIcon" class="fas fa-bolt"></i>
                 <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
             </button>
-            <p style="margin-top: 1.5rem; font-size: 0.6875rem; color: #64748b; line-height: 1.625; font-style: italic;">Yêu cầu của bạn sẽ được xử lý an toàn.</p>
+            <p style="margin-top: 1.5rem; font-size: 0.6875rem; color: #64748b; line-height: 1.625; font-style: italic;">Yêu cầu của bạn sẽ được xử lý .</p>
         </div>
 
         <!-- Step 2: Result Display -->
@@ -480,7 +474,7 @@
             }
 
             if (!userId) {
-                throw new Error('USER ID không hợp lệ - Cần có token với định dạng userId-deviceId (ví dụ: ?token=123-deviceXYZ)');
+                throw new Error('USER không hợp lệ - Vui lòng đăng nhập từ App để lấy key');
             }
 
             // Store for later use
@@ -799,3 +793,4 @@
     </script>
 </body>
 </html>
+
