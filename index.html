@@ -148,23 +148,23 @@
         <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">SYSTEM</span></h1>
         <p style="font-size: 0.625rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
+        <!-- Status Indicator -->
+        <div id="statusIndicator" class="status-indicator status-idle">
+            <i class="fas fa-info-circle"></i>
+            <span>Sẵn sàng</span>
+        </div>
+
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
         <input type="text" id="email" class="honeypot" tabindex="-1" autocomplete="off">
         <input type="text" id="phone" class="honeypot" tabindex="-1" autocomplete="off">
         
         <!-- Error Message Display -->
-        <div id="errorMessage" class="hidden" style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 0.5rem;">
+        <div id="errorMessage" class="error-message hidden" style="margin-bottom: 1rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
-                <span id="errorText" style="color: #ef4444; font-size: 0.75rem;"></span>
+                <span id="errorText" style="color: #fca5a5; font-size: 0.75rem;"></span>
             </div>
-        </div>
-
-        <!-- Status Indicator -->
-        <div id="statusIndicator" class="status-indicator status-idle" style="width: 100%; justify-content: center; margin-bottom: 1rem;">
-            <i class="fas fa-info-circle"></i>
-            <span>Sẵn sàng</span>
         </div>
 
         <!-- Step 1: Action Button -->
@@ -199,9 +199,25 @@
     </div>
 
     <script>
+        // ===== CONSTANTS =====
+        const TIMEOUTS = {
+            TURNSTILE_CHECK: 3000,
+            ERROR_HIDE: 5000,
+            BUTTON_RESET: 2000
+        };
+
+        const VALIDATION = {
+            USER_ID_MIN: 1,
+            USER_ID_MAX: 10,
+            DEVICE_ID_MIN: 3,
+            DEVICE_ID_MAX: 100,
+            SESSION_MIN: 1000,
+            INTERACTION_CHECK: 2000
+        };
+
         // ===== CONFIGURATION =====
         const CONFIG = {
-            SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev/',
+            SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev',
             RATE_LIMIT: {
                 maxRequests: 5,
                 timeWindow: 60000 // 60 seconds
@@ -210,8 +226,9 @@
                 difficulty: 4,
                 enabled: true
             },
-            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D', // Updated to user's key
-            APP_SESSION_ID: 'DN-2026-V1' // Must match server
+            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
+            REQUIRE_TURNSTILE: false
+            // APP_SESSION_ID đã được xóa - chỉ dùng ở server!
         };
 
         // ===== STATE MANAGEMENT =====
@@ -226,12 +243,36 @@
         
         // ===== UI STATE MANAGEMENT =====
         const uiState = {
-            currentStatus: 'idle', // idle, processing, error, success
+            currentStatus: 'idle',
             errorMessage: '',
             userId: null,
-            userToken: null
+            userToken: null,
+            deviceId: null
         };
-        
+
+        // ===== UTILITY FUNCTIONS =====
+        function generateCSRFToken() {
+            const randomBytes = new Uint8Array(32);
+            crypto.getRandomValues(randomBytes);
+            return btoa(String.fromCharCode(...randomBytes));
+        }
+
+        function generateRequestId() {
+            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // ===== ERROR HANDLING =====
+        function handleError(error, context = '') {
+            const message = error.message || error;
+            console.error(`Error in ${context}:`, message);
+            showError(message);
+            updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
+            
+            setTimeout(() => {
+                updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
+            }, TIMEOUTS.BUTTON_RESET);
+        }
+
         // ===== UI HELPER FUNCTIONS =====
         function updateButtonState(status, text, icon) {
             const btnAction = document.getElementById('btnAction');
@@ -290,11 +331,11 @@
             errorDiv.classList.remove('hidden');
             uiState.errorMessage = message;
             
-            // Auto-hide error after 5 seconds
+            // Auto-hide error after timeout
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
                 uiState.errorMessage = '';
-            }, 5000);
+            }, TIMEOUTS.ERROR_HIDE);
         }
         
         function hideError() {
@@ -334,13 +375,21 @@
         window.addEventListener('load', () => {
             setTimeout(() => {
                 if (!turnstileLoaded) {
-                    console.warn('Turnstile not loaded yet, enabling button anyway');
-                    const btnAction = document.getElementById('btnAction');
-                    if (btnAction) {
-                        btnAction.disabled = false;
+                    if (CONFIG.REQUIRE_TURNSTILE) {
+                        console.error('Turnstile required but not loaded - blocking access');
+                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
+                        showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
+                    } else {
+                        console.warn('Turnstile not loaded, enabling button with fallback verification');
+                        const btnAction = document.getElementById('btnAction');
+                        if (btnAction) {
+                            btnAction.disabled = false;
+                            btnAction.style.opacity = '1';
+                            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT (FALLBACK)', 'fas fa-bolt');
+                        }
                     }
                 }
-            }, 3000);
+            }, TIMEOUTS.TURNSTILE_CHECK);
         });
 
         // ===== RATE LIMITING =====
@@ -374,13 +423,13 @@
             }
             
             // Check session duration
-            if (sessionDuration < 1000) {
+            if (sessionDuration < VALIDATION.SESSION_MIN) {
                 console.warn('Session too short:', sessionDuration);
                 return false;
             }
             
             // Check user interactions
-            if (sessionDuration > 2000 && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
+            if (sessionDuration > VALIDATION.INTERACTION_CHECK && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
                 console.warn('No user interactions detected');
                 return false;
             }
@@ -401,44 +450,60 @@
             const userToken = urlParams.get('token');
 
             if (!deviceId) {
-                showError('THIẾU THÔNG TIN - Vui lòng thêm ?id=DEVICE_ID vào URL')
-                return false;
+                throw new Error('THIẾU THÔNG TIN - Vui lòng thêm ?id=DEVICE_ID vào URL');
             }
 
             // Parse user_id from userToken (format: userId-deviceId)
             let userId = null;
             if (userToken && userToken.includes('-')) {
-                const parts = userToken.split('-');
-                userId = parseInt(parts[0]);
-                if (isNaN(userId) || userId <= 0) {
+                try {
+                    const parts = userToken.split('-');
+                    if (parts.length >= 2) {
+                        userId = parseInt(parts[0]);
+                        if (isNaN(userId) || userId <= 0) {
+                            console.warn('Invalid user_id parsed:', parts[0]);
+                            userId = null;
+                        } else {
+                            console.log('Successfully parsed user_id:', userId, 'from token:', userToken);
+                        }
+                    } else {
+                        console.warn('Invalid token format - not enough parts:', userToken);
+                    }
+                } catch (error) {
+                    console.error('Error parsing userToken:', error);
                     userId = null;
                 }
+            } else if (userToken) {
+                console.warn('Token exists but does not contain \'-\' separator:', userToken);
+            } else {
+                console.warn('No userToken provided in URL');
+            }
+
+            if (!userId) {
+                throw new Error('USER ID không hợp lệ - Cần có token với định dạng userId-deviceId (ví dụ: ?token=123-deviceXYZ)');
             }
 
             // Store for later use
             uiState.userId = userId;
             uiState.userToken = userToken;
+            uiState.deviceId = deviceId;
 
-            // Validate user ID
-            if (!userId || userId.toString().trim() === '') {
-                showError('USER ID không hợp lệ - Độ dài phải từ 3-50 ký tự')
-                return false;
+            // Additional validation for user_id
+            if (userId.toString().length < VALIDATION.USER_ID_MIN || userId.toString().length > VALIDATION.USER_ID_MAX) {
+                throw new Error('USER ID không hợp lệ - Độ dài phải từ 1-10 chữ số');
             }
             
-            // Validate user ID format (basic check)
-            if (userId.toString().length < 3 || userId.toString().length > 50) {
-                showError('USER ID không hợp lệ - Độ dài phải từ 3-50 ký tự')
-                return false;
+            // Check for suspicious characters (should be numeric only)
+            if (!/^\d+$/.test(userId.toString())) {
+                throw new Error('USER ID chỉ được chứa chữ số');
             }
             
-            // Check for suspicious characters
-            const suspiciousPattern = /[<>"'&]/;
-            if (suspiciousPattern.test(userId.toString())) {
-            if (suspiciousPattern.test(userId)) {
-                showError('USER ID chứa ký tự không hợp lệ');
-                return false;
+            // Validate device ID format
+            if (!deviceId || deviceId.length < VALIDATION.DEVICE_ID_MIN || deviceId.length > VALIDATION.DEVICE_ID_MAX) {
+                throw new Error('DEVICE ID không hợp lệ - Độ dài phải từ 3-100 ký tự');
             }
             
+            console.log('Validation successful - user_id:', userId, 'device_id:', deviceId);
             return true;
         }
 
@@ -452,156 +517,183 @@
             const target = '0'.repeat(difficulty);
             let nonce = 0;
             let hash = '';
+            let iterations = 0;
+            const maxIterations = 1000000;
 
-            while (true) {
-                const input = challenge + nonce;
-                const encoder = new TextEncoder();
-                const data = encoder.encode(input);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            // Use setTimeout to prevent browser freezing
+            return new Promise((resolve, reject) => {
+                function computeNext() {
+                    try {
+                        const input = challenge + nonce;
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(input);
+                        const hashBuffer = crypto.subtle.digest('SHA-256', data);
+                        
+                        hashBuffer.then(buffer => {
+                            const hashArray = Array.from(new Uint8Array(buffer));
+                            hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-                if (hash.startsWith(target)) {
-                    return { nonce, hash };
+                            if (hash.startsWith(target)) {
+                                resolve({ nonce, hash });
+                                return;
+                            }
+
+                            nonce++;
+                            iterations++;
+
+                            if (iterations > maxIterations) {
+                                reject(new Error('Proof of work timeout'));
+                                return;
+                            }
+
+                            // Yield control to browser every 100 iterations
+                            if (iterations % 100 === 0) {
+                                setTimeout(computeNext, 0);
+                            } else {
+                                computeNext();
+                            }
+                        }).catch(error => {
+                            reject(error);
+                        });
+                    } catch (error) {
+                        reject(error);
+                    }
                 }
-
-                nonce++;
-
-                if (nonce > 1000000) {
-                    throw new Error('Proof of work timeout');
-                }
-            }
+                
+                computeNext();
+            });
         }
 
         // ===== ENDPOINT SIGNATURE =====
         async function generateEndpointSignature(endpoint, timestamp, deviceId) {
-            const secret = CONFIG.APP_SESSION_ID;
+            // Không dùng APP_SESSION_ID ở client - server sẽ tự verify
             const combined = `${endpoint}:${timestamp}:${deviceId}`;
             
             const encoder = new TextEncoder();
-            const keyData = encoder.encode(secret);
             const messageData = encoder.encode(combined);
             
-            const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyData,
-                { name: 'HMAC', hash: 'SHA-256' },
-                false,
-                ['sign']
-            );
-            
-            const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-            const signature = Array.from(new Uint8Array(signatureBuffer))
+            const hashBuffer = await crypto.subtle.digest('SHA-256', messageData);
+            const signature = Array.from(new Uint8Array(hashBuffer))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
             
             return signature;
         }
 
-        // ===== MAIN REQUEST FUNCTION =====
-        async function initiateKeyRequest() {
-            // Hide any previous errors
-            hideError();
+        // ===== REQUEST PREPARATION =====
+        function prepareRequestPayload() {
+            const deviceId = uiState.deviceId;
+            const timestamp = Date.now().toString();
+            const endpoint = '/github/generate_24h_key';
             
-            // Validate user input first
-            if (!validateUserInput()) {
-                updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
-                setTimeout(() => {
-                    updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
-                }, 3000);
-                return;
+            if (!securityState.csrfToken) {
+                securityState.csrfToken = generateCSRFToken();
+            }
+
+            return {
+                action: 'generate_24h_key',
+                module: 'github',
+                user_id: uiState.userId,
+                key_input: uiState.userToken,
+                device_id: deviceId,
+                csrf_token: securityState.csrfToken,
+                user_agent: navigator.userAgent,
+                timestamp: timestamp,
+                proof_of_work: null, // sẽ được thêm sau
+                turnstile_token: securityState.turnstileToken,
+                endpoint: endpoint,
+                endpoint_signature: null // sẽ được thêm sau
+            };
+        }
+
+        // ===== API REQUEST =====
+        async function sendRequest(payload) {
+            const response = await fetch(CONFIG.SERVER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': payload.device_id
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                if (response.status === 429) {
+                    throw new Error('⏱️ Quá nhiều yêu cầu! Vui lòng đợi 1 phút rồi thử lại.');
+                } else if (response.status === 403) {
+                    throw new Error('🚫 Truy cập bị từ chối! Xác thực bảo mật thất bại. Vui lòng kiểm tra lại.');
+                }
+                throw new Error(`❌ Lỗi server: ${response.status} Vui lòng thử lại sau.`);
             }
             
-            // Check Turnstile verification (more lenient)
-            if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
-                console.warn('Turnstile not verified, proceeding anyway');
-            }
-            
-            // Update UI to processing state
-            updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
-            
-            try {
-                checkRateLimit();
+            return await response.json();
+        }
+
+        // ===== RESPONSE HANDLING =====
+        function handleResponse(result) {
+            if (result.success && result.data) {
+                updateButtonState('success', '<i class="fas fa-check"></i> THÀNH CÔNG', 'fas fa-check');
+                document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + uiState.deviceId.slice(-8);
+                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('step-2').classList.remove('hidden');
                 
+                securityState.csrfToken = generateCSRFToken();
+                return true;
+            } else {
+                const errorMsg = result.error || "Lỗi không xác định";
+                throw new Error(errorMsg);
+            }
+        }
+
+        // ===== MAIN REQUEST FUNCTION (Refactored) =====
+        async function initiateKeyRequest() {
+            try {
+                hideError();
+                
+                // Validate input
+                if (!validateUserInput()) {
+                    updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
+                    setTimeout(() => {
+                        updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                    }, TIMEOUTS.BUTTON_RESET);
+                    return;
+                }
+                
+                // Check Turnstile
+                if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
+                    throw new Error('🚫 Yêu cầu xác thực Cloudflare Turnstile bắt buộc');
+                } else if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
+                    console.warn('Turnstile not verified, proceeding with fallback mode');
+                }
+                
+                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
+                
+                // Security checks
+                checkRateLimit();
                 if (!detectBotActivity()) {
                     throw new Error('🤖 Phát hiện hoạt động bất thường. Vui lòng thử lại sau vài giây.');
                 }
 
-                const deviceId = getDeviceFingerprint();
-                const timestamp = Date.now().toString();
-                const endpoint = '/github/generate_24h_key';
-                
-                if (!securityState.csrfToken) {
-                    securityState.csrfToken = generateCSRFToken();
-                }
-
+                // Prepare request
                 updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...', 'fas fa-spinner fa-spin');
-                const powChallenge = timestamp + deviceId;
-                const proofOfWork = await generateProofOfWork(powChallenge);
+                const payload = prepareRequestPayload();
+                
+                // Generate proof of work
+                const powChallenge = payload.timestamp + payload.device_id;
+                payload.proof_of_work = await generateProofOfWork(powChallenge);
                 
                 // Generate endpoint signature
-                const endpointSignature = await generateEndpointSignature(endpoint, timestamp, deviceId);
+                payload.endpoint_signature = await generateEndpointSignature(payload.endpoint, payload.timestamp, payload.device_id);
 
-                const payload = {
-                    action: 'generate_24h_key',
-                    module: 'github',
-                    user_id: uiState.userId, // Use validated user ID
-                    key_input: uiState.userToken || 'DEMO-KEY-12345',
-                    device_id: deviceId,
-                    csrf_token: securityState.csrfToken,
-                    user_agent: navigator.userAgent,
-                    timestamp: timestamp,
-                    proof_of_work: proofOfWork,
-                    turnstile_token: securityState.turnstileToken,
-                    endpoint: endpoint,
-                    endpoint_signature: endpointSignature,
-                    auth_key: 'Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha' // Required auth key
-                };
-
+                // Send request
                 updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...', 'fas fa-spinner fa-spin');
-                const response = await fetch(CONFIG.SERVER_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Device-ID': deviceId
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    if (response.status === 429) {
-                        throw new Error('⏱️ Quá nhiều yêu cầu! Vui lòng đợi 1 phút rồi thử lại.');
-                    } else if (response.status === 403) {
-                        throw new Error('🚫 Truy cập bị từ chối! Xác thực bảo mật thất bại. Vui lòng kiểm tra lại.');
-                    }
-                    throw new Error(`❌ Lỗi server: ${response.status} Vui lòng thử lại sau.`);
-                }
-                
-                const result = await response.json();
+                const result = await sendRequest(payload);
 
-                if (result.success && result.data) {
-                    updateButtonState('success', '<i class="fas fa-check"></i> THÀNH CÔNG', 'fas fa-check');
-                    document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceId.slice(-8);
-                    document.getElementById('step-1').classList.add('hidden');
-                    document.getElementById('step-2').classList.remove('hidden');
-                    
-                    securityState.csrfToken = generateCSRFToken();
-                } else {
-                    const errorMsg = result.error || "Lỗi không xác định";
-                    updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
-                    showError(errorMsg);
-                    setTimeout(() => {
-                        updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
-                    }, 2000);
-                    console.error('Request failed:', errorMsg);
-                }
+                // Handle response
+                handleResponse(result);
+                
             } catch (error) {
-                updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI KẾT NỐI', 'fas fa-exclamation-triangle');
-                showError(error.message);
-                setTimeout(() => {
-                    updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
-                }, 2000);
-                console.error('Request error:', error.message);
+                handleError(error, 'initiateKeyRequest');
             }
         }
 
@@ -610,19 +702,20 @@
             const keyText = document.getElementById('resultKey').innerText;
             if (keyText === '---') return;
             
+            const copyBtn = document.querySelector('button[onclick="copyKeyToClipboard()"]');
+            
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(keyText).then(() => {
-                    showCopySuccess();
+                    showCopySuccess(copyBtn);
                 }).catch(() => {
-                    fallbackCopy(keyText);
+                    fallbackCopy(keyText, copyBtn);
                 });
             } else {
-                fallbackCopy(keyText);
+                fallbackCopy(keyText, copyBtn);
             }
         }
         
-        function showCopySuccess() {
-            const copyBtn = event.target;
+        function showCopySuccess(copyBtn) {
             const originalText = copyBtn.innerHTML;
             copyBtn.innerHTML = '<i class="fas fa-check"></i> ĐÃ SAO CHÉP!';
             copyBtn.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
@@ -634,10 +727,10 @@
                 copyBtn.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
                 copyBtn.style.borderColor = 'rgba(59, 130, 246, 0.2)';
                 copyBtn.style.color = '#60a5fa';
-            }, 2000);
+            }, TIMEOUTS.BUTTON_RESET);
         }
 
-        function fallbackCopy(text) {
+        function fallbackCopy(text, copyBtn) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
@@ -646,18 +739,7 @@
             textarea.select();
             document.execCommand('copy');
             document.body.removeChild(textarea);
-            alert("✅ Đã sao chép mã Key!");
-        }
-
-        // ===== UTILITY FUNCTIONS =====
-        function generateCSRFToken() {
-            const randomBytes = new Uint8Array(32);
-            crypto.getRandomValues(randomBytes);
-            return btoa(String.fromCharCode(...randomBytes));
-        }
-
-        function generateRequestId() {
-            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            showCopySuccess(copyBtn);
         }
 
         // ===== DEVICE FINGERPRINTING =====
@@ -700,6 +782,7 @@
             }
         });
 
+        // ===== INITIALIZATION =====
         window.addEventListener('load', () => {
             securityState.csrfToken = generateCSRFToken();
             
@@ -707,11 +790,12 @@
             updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
             
             // Validate user input on page load
-            if (!validateUserInput()) {
-                console.warn('Invalid user input detected on page load');
+            try {
+                validateUserInput();
+            } catch (error) {
+                console.warn('Invalid user input detected on page load:', error.message);
             }
         });
     </script>
 </body>
 </html>
-
