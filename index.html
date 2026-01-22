@@ -38,10 +38,32 @@
             box-shadow: 0 10px 25px -5px var(--brand-glow);
             color: white;
             cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        .btn-main:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px var(--brand-glow);
+        }
+        .btn-main:active:not(:disabled) {
+            transform: translateY(0);
         }
         .btn-main:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+        }
+        .btn-processing {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+        }
+        .btn-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
         }
         .key-box {
             background: rgba(0, 0, 0, 0.4);
@@ -62,13 +84,58 @@
             height: 1px;
             opacity: 0;
         }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            margin-top: 1rem;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .status-idle {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .status-processing {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
         .turnstile-container {
             display: flex;
             justify-content: center;
             margin: 1.5rem 0;
-        }
-        .hidden {
-            display: none;
         }
     </style>
 </head>
@@ -81,15 +148,31 @@
         <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">SYSTEM</span></h1>
         <p style="font-size: 0.625rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
-        <!-- Honeypot Field (hidden trap for bots) -->
+        <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
+        <input type="text" id="email" class="honeypot" tabindex="-1" autocomplete="off">
+        <input type="text" id="phone" class="honeypot" tabindex="-1" autocomplete="off">
+        
+        <!-- Error Message Display -->
+        <div id="errorMessage" class="hidden" style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                <span id="errorText" style="color: #ef4444; font-size: 0.75rem;"></span>
+            </div>
+        </div>
+
+        <!-- Status Indicator -->
+        <div id="statusIndicator" class="status-indicator status-idle" style="width: 100%; justify-content: center; margin-bottom: 1rem;">
+            <i class="fas fa-info-circle"></i>
+            <span>Sẵn sàng</span>
+        </div>
 
         <!-- Step 1: Action Button -->
         <div id="step-1">
             <!-- Cloudflare Turnstile Widget -->
             <div class="turnstile-container">
                 <div class="cf-turnstile" 
-                     data-sitekey="0x4AAAAAAAABvnMYj9M7qJQO" 
+                     data-sitekey="0x4AAAAAACNwFP1me9pXoX_D" 
                      data-callback="onTurnstileSuccess"
                      data-error-callback="onTurnstileError"
                      data-theme="dark"
@@ -97,7 +180,7 @@
             </div>
 
             <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 1rem; border-radius: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: transform 0.2s; border: none;">
-                <i class="fas fa-bolt"></i>
+                <i id="btnIcon" class="fas fa-bolt"></i>
                 <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
             </button>
             <p style="margin-top: 1.5rem; font-size: 0.6875rem; color: #64748b; line-height: 1.625; font-style: italic;">Yêu cầu của bạn sẽ được xử lý an toàn.</p>
@@ -127,7 +210,7 @@
                 difficulty: 4,
                 enabled: true
             },
-            TURNSTILE_SITE_KEY: '0x4AAAAAAAABvnMYj9M7qJQO', // Updated site key
+            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D', // Updated to user's key
             APP_SESSION_ID: 'DN-2026-V1' // Must match server
         };
 
@@ -140,6 +223,85 @@
             turnstileToken: null,
             turnstileVerified: false
         };
+        
+        // ===== UI STATE MANAGEMENT =====
+        const uiState = {
+            currentStatus: 'idle', // idle, processing, error, success
+            errorMessage: '',
+            userId: null,
+            userToken: null
+        };
+        
+        // ===== UI HELPER FUNCTIONS =====
+        function updateButtonState(status, text, icon) {
+            const btnAction = document.getElementById('btnAction');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = statusIndicator.querySelector('span');
+            const statusIcon = statusIndicator.querySelector('i');
+            
+            // Remove all state classes
+            btnAction.classList.remove('btn-processing', 'btn-error', 'btn-success');
+            statusIndicator.classList.remove('status-idle', 'status-processing', 'status-error', 'status-success');
+            
+            // Add new state classes and update content
+            switch(status) {
+                case 'processing':
+                    btnAction.classList.add('btn-processing');
+                    statusIndicator.classList.add('status-processing');
+                    statusText.textContent = 'Đang xử lý';
+                    statusIcon.className = 'fas fa-spinner fa-spin';
+                    btnAction.disabled = true;
+                    break;
+                case 'error':
+                    btnAction.classList.add('btn-error');
+                    statusIndicator.classList.add('status-error');
+                    statusText.textContent = 'Lỗi';
+                    statusIcon.className = 'fas fa-exclamation-triangle';
+                    btnAction.disabled = false;
+                    break;
+                case 'success':
+                    btnAction.classList.add('btn-success');
+                    statusIndicator.classList.add('status-success');
+                    statusText.textContent = 'Thành công';
+                    statusIcon.className = 'fas fa-check-circle';
+                    btnAction.disabled = true;
+                    break;
+                default: // idle
+                    statusIndicator.classList.add('status-idle');
+                    statusText.textContent = 'Sẵn sàng';
+                    statusIcon.className = 'fas fa-info-circle';
+                    btnAction.disabled = false;
+            }
+            
+            // Update button text and icon
+            if (text) btnText.innerHTML = text;
+            if (icon) btnIcon.className = icon;
+            
+            uiState.currentStatus = status;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+            uiState.errorMessage = message;
+            
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+                uiState.errorMessage = '';
+            }, 5000);
+        }
+        
+        function hideError() {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.classList.add('hidden');
+            uiState.errorMessage = '';
+        }
 
         // ===== TURNSTILE CALLBACKS =====
         let turnstileLoaded = false;
@@ -164,11 +326,8 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
-            // Show user-friendly error instead of alert
-            const btnText = document.getElementById('btnText');
-            if (btnText) {
-                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC';
-            }
+            updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
+            showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
         
         // Check if Turnstile is loaded
@@ -183,43 +342,6 @@
                 }
             }, 3000);
         });
-
-        // ===== UTILITY FUNCTIONS =====
-        function generateCSRFToken() {
-            const randomBytes = new Uint8Array(32);
-            crypto.getRandomValues(randomBytes);
-            return btoa(String.fromCharCode(...randomBytes));
-        }
-
-        function generateRequestId() {
-            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        // ===== DEVICE FINGERPRINTING =====
-        function getDeviceFingerprint() {
-            let deviceId = localStorage.getItem('device_id');
-            
-            if (!deviceId) {
-                let canvasHash = '';
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.textBaseline = 'top';
-                        ctx.font = '14px Arial';
-                        ctx.fillText('Device fingerprint', 2, 2);
-                        canvasHash = canvas.toDataURL();
-                    }
-                } catch (e) {
-                    canvasHash = crypto.randomUUID();
-                }
-                
-                deviceId = 'DEVICE_' + btoa((canvasHash || 'fallback') + Date.now()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
-                localStorage.setItem('device_id', deviceId);
-            }
-            
-            return deviceId;
-        }
 
         // ===== RATE LIMITING =====
         function checkRateLimit() {
@@ -241,16 +363,79 @@
         function detectBotActivity() {
             const sessionDuration = Date.now() - securityState.sessionStart;
             
-            const honeypotField = document.getElementById('website');
-            if (honeypotField && honeypotField.value.trim() !== '') {
-                return false;
+            // Check multiple honeypot fields
+            const honeypotFields = ['website', 'email', 'phone'];
+            for (const fieldId of honeypotFields) {
+                const field = document.getElementById(fieldId);
+                if (field && field.value.trim() !== '') {
+                    console.warn(`Honeypot field ${fieldId} filled:`, field.value);
+                    return false;
+                }
             }
             
+            // Check session duration
             if (sessionDuration < 1000) {
+                console.warn('Session too short:', sessionDuration);
                 return false;
             }
             
+            // Check user interactions
             if (sessionDuration > 2000 && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
+                console.warn('No user interactions detected');
+                return false;
+            }
+            
+            // Check for common bot behaviors
+            if (navigator.webdriver) {
+                console.warn('WebDriver detected');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // ===== INPUT VALIDATION =====
+        function validateUserInput() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const deviceId = urlParams.get('id');
+            const userToken = urlParams.get('token');
+
+            if (!deviceId) {
+                showError('THIẾU THÔNG TIN - Vui lòng thêm ?id=DEVICE_ID vào URL')
+                return false;
+            }
+
+            // Parse user_id from userToken (format: userId-deviceId)
+            let userId = null;
+            if (userToken && userToken.includes('-')) {
+                const parts = userToken.split('-');
+                userId = parseInt(parts[0]);
+                if (isNaN(userId) || userId <= 0) {
+                    userId = null;
+                }
+            }
+
+            // Store for later use
+            uiState.userId = userId;
+            uiState.userToken = userToken;
+
+            // Validate user ID
+            if (!userId || userId.toString().trim() === '') {
+                showError('USER ID không hợp lệ - Độ dài phải từ 3-50 ký tự')
+                return false;
+            }
+            
+            // Validate user ID format (basic check)
+            if (userId.toString().length < 3 || userId.toString().length > 50) {
+                showError('USER ID không hợp lệ - Độ dài phải từ 3-50 ký tự')
+                return false;
+            }
+            
+            // Check for suspicious characters
+            const suspiciousPattern = /[<>"'&]/;
+            if (suspiciousPattern.test(userId.toString())) {
+            if (suspiciousPattern.test(userId)) {
+                showError('USER ID chứa ký tự không hợp lệ');
                 return false;
             }
             
@@ -315,36 +500,31 @@
 
         // ===== MAIN REQUEST FUNCTION =====
         async function initiateKeyRequest() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('id');
-            const userToken = urlParams.get('token');
-
-            if (!userId) {
-                // Show inline error instead of alert
-                const btnText = document.getElementById('btnText');
-                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN';
+            // Hide any previous errors
+            hideError();
+            
+            // Validate user input first
+            if (!validateUserInput()) {
+                updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
                 setTimeout(() => {
-                    btnText.innerHTML = '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT';
+                    updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
                 }, 3000);
                 return;
             }
-
+            
             // Check Turnstile verification (more lenient)
             if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
                 console.warn('Turnstile not verified, proceeding anyway');
             }
-
-            const btnAction = document.getElementById('btnAction');
-            const btnText = document.getElementById('btnText');
             
-            btnAction.disabled = true;
-            btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...';
-
+            // Update UI to processing state
+            updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
+            
             try {
                 checkRateLimit();
                 
                 if (!detectBotActivity()) {
-                    throw new Error('🤖 Phát hiện hoạt động bất thường.\n\nVui lòng thử lại sau vài giây.');
+                    throw new Error('🤖 Phát hiện hoạt động bất thường. Vui lòng thử lại sau vài giây.');
                 }
 
                 const deviceId = getDeviceFingerprint();
@@ -355,7 +535,7 @@
                     securityState.csrfToken = generateCSRFToken();
                 }
 
-                btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...';
+                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...', 'fas fa-spinner fa-spin');
                 const powChallenge = timestamp + deviceId;
                 const proofOfWork = await generateProofOfWork(powChallenge);
                 
@@ -365,7 +545,8 @@
                 const payload = {
                     action: 'generate_24h_key',
                     module: 'github',
-                    key_input: userToken || 'DEMO-KEY-12345',
+                    user_id: uiState.userId, // Use validated user ID
+                    key_input: uiState.userToken || 'DEMO-KEY-12345',
                     device_id: deviceId,
                     csrf_token: securityState.csrfToken,
                     user_agent: navigator.userAgent,
@@ -377,7 +558,7 @@
                     auth_key: 'Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha' // Required auth key
                 };
 
-                btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...';
+                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...', 'fas fa-spinner fa-spin');
                 const response = await fetch(CONFIG.SERVER_URL, {
                     method: 'POST',
                     headers: {
@@ -389,16 +570,17 @@
                 
                 if (!response.ok) {
                     if (response.status === 429) {
-                        throw new Error('⏱️ Quá nhiều yêu cầu!\n\nVui lòng đợi 1 phút rồi thử lại.');
+                        throw new Error('⏱️ Quá nhiều yêu cầu! Vui lòng đợi 1 phút rồi thử lại.');
                     } else if (response.status === 403) {
-                        throw new Error('🚫 Truy cập bị từ chối!\n\nXác thực bảo mật thất bại. Vui lòng kiểm tra lại.');
+                        throw new Error('🚫 Truy cập bị từ chối! Xác thực bảo mật thất bại. Vui lòng kiểm tra lại.');
                     }
-                    throw new Error(`❌ Lỗi server: ${response.status}\n\nVui lòng thử lại sau.`);
+                    throw new Error(`❌ Lỗi server: ${response.status} Vui lòng thử lại sau.`);
                 }
                 
                 const result = await response.json();
 
                 if (result.success && result.data) {
+                    updateButtonState('success', '<i class="fas fa-check"></i> THÀNH CÔNG', 'fas fa-check');
                     document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceId.slice(-8);
                     document.getElementById('step-1').classList.add('hidden');
                     document.getElementById('step-2').classList.remove('hidden');
@@ -406,20 +588,18 @@
                     securityState.csrfToken = generateCSRFToken();
                 } else {
                     const errorMsg = result.error || "Lỗi không xác định";
-                    // Show inline error instead of alert
-                    btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI';
+                    updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
+                    showError(errorMsg);
                     setTimeout(() => {
-                        btnAction.disabled = false;
-                        btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                        updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
                     }, 2000);
                     console.error('Request failed:', errorMsg);
                 }
             } catch (error) {
-                // Show inline error instead of alert
-                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI KẾT NỐI';
+                updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI KẾT NỐI', 'fas fa-exclamation-triangle');
+                showError(error.message);
                 setTimeout(() => {
-                    btnAction.disabled = false;
-                    btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                    updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
                 }, 2000);
                 console.error('Request error:', error.message);
             }
@@ -432,13 +612,29 @@
             
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(keyText).then(() => {
-                    alert("✅ Đã sao chép mã Key!");
+                    showCopySuccess();
                 }).catch(() => {
                     fallbackCopy(keyText);
                 });
             } else {
                 fallbackCopy(keyText);
             }
+        }
+        
+        function showCopySuccess() {
+            const copyBtn = event.target;
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> ĐÃ SAO CHÉP!';
+            copyBtn.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+            copyBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            copyBtn.style.color = '#34d399';
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                copyBtn.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                copyBtn.style.color = '#60a5fa';
+            }, 2000);
         }
 
         function fallbackCopy(text) {
@@ -451,6 +647,43 @@
             document.execCommand('copy');
             document.body.removeChild(textarea);
             alert("✅ Đã sao chép mã Key!");
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function generateCSRFToken() {
+            const randomBytes = new Uint8Array(32);
+            crypto.getRandomValues(randomBytes);
+            return btoa(String.fromCharCode(...randomBytes));
+        }
+
+        function generateRequestId() {
+            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // ===== DEVICE FINGERPRINTING =====
+        function getDeviceFingerprint() {
+            let deviceId = localStorage.getItem('device_id');
+            
+            if (!deviceId) {
+                let canvasHash = '';
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.textBaseline = 'top';
+                        ctx.font = '14px Arial';
+                        ctx.fillText('Device fingerprint', 2, 2);
+                        canvasHash = canvas.toDataURL();
+                    }
+                } catch (e) {
+                    canvasHash = crypto.randomUUID();
+                }
+                
+                deviceId = 'DEVICE_' + btoa((canvasHash || 'fallback') + Date.now()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+                localStorage.setItem('device_id', deviceId);
+            }
+            
+            return deviceId;
         }
 
         // ===== SECURITY PROTECTIONS =====
@@ -471,9 +704,11 @@
             securityState.csrfToken = generateCSRFToken();
             
             // Initialize button state
-            const btnAction = document.getElementById('btnAction');
-            if (btnAction) {
-                btnAction.disabled = false;
+            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+            
+            // Validate user input on page load
+            if (!validateUserInput()) {
+                console.warn('Invalid user input detected on page load');
             }
         });
     </script>
