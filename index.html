@@ -444,7 +444,7 @@
             const userToken = urlParams.get('token');
 
             if (!deviceId) {
-                throw new Error('THIẾU THÔNG TIN - Vui lòng thêm ?id=DEVICE_ID vào URL');
+                throw new Error('Vui lòng đăng nhập từ App để lấy key');
             }
 
             // Parse user_id from userToken (format: userId-deviceId)
@@ -793,4 +793,5 @@
     </script>
 </body>
 </html>
+
 
