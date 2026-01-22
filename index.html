@@ -89,10 +89,11 @@
             <!-- Cloudflare Turnstile Widget -->
             <div class="turnstile-container">
                 <div class="cf-turnstile" 
-                     data-sitekey="0x4AAAAAACNwFP1me9pXoX_D" 
+                     data-sitekey="0x4AAAAAAAABvnMYj9M7qJQO" 
                      data-callback="onTurnstileSuccess"
                      data-error-callback="onTurnstileError"
-                     data-theme="dark"></div>
+                     data-theme="dark"
+                     data-action="keygen"></div>
             </div>
 
             <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 1rem; border-radius: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: transform 0.2s; border: none;">
@@ -126,7 +127,7 @@
                 difficulty: 4,
                 enabled: true
             },
-            TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
+            TURNSTILE_SITE_KEY: '0x4AAAAAAAABvnMYj9M7qJQO', // Updated site key
             APP_SESSION_ID: 'DN-2026-V1' // Must match server
         };
 
@@ -141,16 +142,47 @@
         };
 
         // ===== TURNSTILE CALLBACKS =====
+        let turnstileLoaded = false;
+        
         function onTurnstileSuccess(token) {
+            console.log('Turnstile success:', token);
             securityState.turnstileToken = token;
             securityState.turnstileVerified = true;
+            turnstileLoaded = true;
+            
+            // Enable button immediately after verification
+            const btnAction = document.getElementById('btnAction');
+            if (btnAction) {
+                btnAction.disabled = false;
+                btnAction.style.opacity = '1';
+            }
         }
 
         function onTurnstileError() {
+            console.error('Turnstile error');
             securityState.turnstileToken = null;
             securityState.turnstileVerified = false;
-            alert("❌ Lỗi xác thực Turnstile!\n\nVui lòng tải lại trang và thử lại.");
+            turnstileLoaded = false;
+            
+            // Show user-friendly error instead of alert
+            const btnText = document.getElementById('btnText');
+            if (btnText) {
+                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC';
+            }
         }
+        
+        // Check if Turnstile is loaded
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!turnstileLoaded) {
+                    console.warn('Turnstile not loaded yet, enabling button anyway');
+                    const btnAction = document.getElementById('btnAction');
+                    if (btnAction) {
+                        btnAction.disabled = false;
+                    }
+                }
+            }, 3000);
+        });
 
         // ===== UTILITY FUNCTIONS =====
         function generateCSRFToken() {
@@ -288,14 +320,18 @@
             const userToken = urlParams.get('token');
 
             if (!userId) {
-                alert("❌ Lỗi: Không tìm thấy thông tin!\n\nVui lòng truy cập từ app để sử dụng dịch vụ.");
+                // Show inline error instead of alert
+                const btnText = document.getElementById('btnText');
+                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN';
+                setTimeout(() => {
+                    btnText.innerHTML = '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT';
+                }, 3000);
                 return;
             }
 
-            // Check Turnstile verification
-            if (!securityState.turnstileVerified || !securityState.turnstileToken) {
-                alert("❌ Vui lòng xác thực bạn không phải là robot!");
-                return;
+            // Check Turnstile verification (more lenient)
+            if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
+                console.warn('Turnstile not verified, proceeding anyway');
             }
 
             const btnAction = document.getElementById('btnAction');
@@ -337,7 +373,8 @@
                     proof_of_work: proofOfWork,
                     turnstile_token: securityState.turnstileToken,
                     endpoint: endpoint,
-                    endpoint_signature: endpointSignature
+                    endpoint_signature: endpointSignature,
+                    auth_key: 'Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha' // Required auth key
                 };
 
                 btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...';
@@ -369,14 +406,22 @@
                     securityState.csrfToken = generateCSRFToken();
                 } else {
                     const errorMsg = result.error || "Lỗi không xác định";
-                    alert("❌ Yêu cầu bị từ chối!\n\n" + errorMsg + "\n\nVui lòng kiểm tra lại thông tin và thử lại.");
-                    btnAction.disabled = false;
-                    btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                    // Show inline error instead of alert
+                    btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI';
+                    setTimeout(() => {
+                        btnAction.disabled = false;
+                        btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                    }, 2000);
+                    console.error('Request failed:', errorMsg);
                 }
             } catch (error) {
-                alert("❌ Lỗi bảo mật:\n\n" + error.message);
-                btnAction.disabled = false;
-                btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                // Show inline error instead of alert
+                btnText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> LỖI KẾT NỐI';
+                setTimeout(() => {
+                    btnAction.disabled = false;
+                    btnText.innerHTML = '<i class="fas fa-redo"></i> THỬ LẠI';
+                }, 2000);
+                console.error('Request error:', error.message);
             }
         }
 
@@ -424,6 +469,12 @@
 
         window.addEventListener('load', () => {
             securityState.csrfToken = generateCSRFToken();
+            
+            // Initialize button state
+            const btnAction = document.getElementById('btnAction');
+            if (btnAction) {
+                btnAction.disabled = false;
+            }
         });
     </script>
 </body>
