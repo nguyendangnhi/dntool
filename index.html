@@ -196,11 +196,7 @@
         <h1 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">PRO</span></h1>
         <p style="font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
-        <!-- Status Indicator -->
-        <div id="statusIndicator" class="status-indicator status-idle">
-            <i class="fas fa-info-circle"></i>
-            <span>Sẵn sàng</span>
-        </div>
+       
 
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
@@ -416,7 +412,7 @@
             turnstileLoaded = false;
             
             updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
-            showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
+            showError('Xác thực thất bại. Vui lòng thử lại.');
         }
         
         // Check if Turnstile is loaded
@@ -425,8 +421,8 @@
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
                         console.error('Turnstile required but not loaded - blocking access');
-                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
-                        showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
+                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC ', 'fas fa-exclamation-triangle');
+                        showError('Vui lòng tải lại trang');
                     } else {
                         console.warn('Turnstile not loaded, enabling button with fallback verification');
                         const btnAction = document.getElementById('btnAction');
@@ -847,4 +843,5 @@
     </script>
 </body>
 </html>
+
 
