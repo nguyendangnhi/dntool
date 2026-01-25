@@ -196,6 +196,12 @@
         <h1 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">PRO</span></h1>
         <p style="font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
+        <!-- Status Indicator -->
+        <div id="statusIndicator" class="status-indicator status-idle">
+            <i class="fas fa-info-circle"></i>
+            <span>Sẵn sàng</span>
+        </div>
+
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
         <input type="text" id="email" class="honeypot" tabindex="-1" autocomplete="off">
@@ -259,7 +265,7 @@
 
         // ===== CONFIGURATION =====
         const CONFIG = {
-            SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev',
+            SERVER_URL: process.env.CLOUDFLARE_URL || 'https://dntool-worker.nguyendangnhi1704.workers.dev',
             RATE_LIMIT: {
                 maxRequests: 5,
                 timeWindow: 60000 // 60 seconds
