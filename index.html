@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DNTOOL - Hệ thống xác thực key bản quyền 24h">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>DNTOOL - CLOUD VERIFIED</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -188,11 +194,11 @@
                      data-action="keygen"></div>
             </div>
 
-            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 0.875rem; border-radius: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s; border: none; font-size: 0.875rem;">
-                <i id="btnIcon" class="fas fa-bolt"></i>
-                <span id="btnText">NHẬN MÃ KÍCH HOẠT</span>
+            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 0.875rem; border-radius: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s; border: none; font-size: 0.875rem;" disabled>
+                <i id="btnIcon" class="fas fa-spinner fa-spin"></i>
+                <span id="btnText">ĐANG KHỞI TẠO...</span>
             </button>
-            <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-style: italic;">Yêu cầu của bạn sẽ được xử lý .</p>
+            <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-style: italic;">Yêu cầu của bạn sẽ được xử lý an toàn và bảo mật.</p>
         </div>
 
         <!-- Step 2: Result Display -->
@@ -211,7 +217,7 @@
         // ===== CONSTANTS =====
         const TIMEOUTS = {
             TURNSTILE_CHECK: 3000,
-            ERROR_HIDE: 5000,
+            ERROR_HIDE: 10000,
             BUTTON_RESET: 2000
         };
 
@@ -226,7 +232,7 @@
 
         // ===== CONFIGURATION =====
         const CONFIG = {
-            SERVER_URL: process.env.CLOUDFLARE_URL || 'https://dntool-worker.nguyendangnhi1704.workers.dev/',
+            SERVER_URL: 'https://dntool-worker.nguyendangnhi1704.workers.dev/',
             RATE_LIMIT: {
                 maxRequests: 5,
                 timeWindow: 60000 // 60 seconds
@@ -237,7 +243,8 @@
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
             REQUIRE_TURNSTILE: false,
-          
+            DEBUG: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+            // APP_SESSION_ID đã được xóa - chỉ dùng ở server!
         };
 
         // ===== STATE MANAGEMENT =====
@@ -259,6 +266,13 @@
             deviceId: null
         };
 
+        // ===== DEBUG HELPER =====
+        function debugLog(method, ...args) {
+            if (CONFIG.DEBUG) {
+                console[method](...args);
+            }
+        }
+
         // ===== UTILITY FUNCTIONS =====
         function generateCSRFToken() {
             const randomBytes = new Uint8Array(32);
@@ -273,7 +287,7 @@
         // ===== ERROR HANDLING =====
         function handleError(error, context = '') {
             const message = error.message || error;
-            console.error(`Error in ${context}:`, message);
+            debugLog('error', `Error in ${context}:`, message);
             showError(message);
             updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
             
@@ -352,7 +366,7 @@
         let turnstileLoaded = false;
         
         function onTurnstileSuccess(token) {
-            console.log('Turnstile success:', token);
+            debugLog('log', 'Turnstile success:', token);
             securityState.turnstileToken = token;
             securityState.turnstileVerified = true;
             turnstileLoaded = true;
@@ -366,7 +380,7 @@
         }
 
         function onTurnstileError() {
-            console.error('Turnstile error');
+            debugLog('error', 'Turnstile error');
             securityState.turnstileToken = null;
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
@@ -380,11 +394,11 @@
             setTimeout(() => {
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
-                        console.error('Turnstile required but not loaded - blocking access');
+                        debugLog('error', 'Turnstile required but not loaded - blocking access');
                         updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
                         showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
                     } else {
-                        console.warn('Turnstile not loaded, enabling button with fallback verification');
+                        debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
                         const btnAction = document.getElementById('btnAction');
                         if (btnAction) {
                             btnAction.disabled = false;
@@ -421,26 +435,26 @@
             for (const fieldId of honeypotFields) {
                 const field = document.getElementById(fieldId);
                 if (field && field.value.trim() !== '') {
-                    console.warn(`Honeypot field ${fieldId} filled:`, field.value);
+                    debugLog('warn', `Honeypot field ${fieldId} filled:`, field.value);
                     return false;
                 }
             }
             
             // Check session duration
             if (sessionDuration < VALIDATION.SESSION_MIN) {
-                console.warn('Session too short:', sessionDuration);
+                debugLog('warn', 'Session too short:', sessionDuration);
                 return false;
             }
             
             // Check user interactions
             if (sessionDuration > VALIDATION.INTERACTION_CHECK && securityState.userInteractions.mouse === 0 && securityState.userInteractions.keyboard === 0) {
-                console.warn('No user interactions detected');
+                debugLog('warn', 'No user interactions detected');
                 return false;
             }
             
             // Check for common bot behaviors
             if (navigator.webdriver) {
-                console.warn('WebDriver detected');
+                debugLog('warn', 'WebDriver detected');
                 return false;
             }
             
@@ -465,32 +479,37 @@
                     if (parts.length >= 2) {
                         userId = parseInt(parts[0]);
                         if (isNaN(userId) || userId <= 0) {
-                            console.warn('Invalid user_id parsed:', parts[0]);
+                            debugLog('warn', 'Invalid user_id parsed:', parts[0]);
                             userId = null;
                         } else {
-                            console.log('Successfully parsed user_id:', userId, 'from token:', userToken);
+                            debugLog('log', 'Successfully parsed user_id:', userId, 'from token:', userToken);
                         }
                     } else {
-                        console.warn('Invalid token format - not enough parts:', userToken);
+                        debugLog('warn', 'Invalid token format - not enough parts:', userToken);
                     }
                 } catch (error) {
-                    console.error('Error parsing userToken:', error);
+                    debugLog('error', 'Error parsing userToken:', error);
                     userId = null;
                 }
             } else if (userToken) {
-                console.warn('Token exists but does not contain \'-\' separator:', userToken);
+                debugLog('warn', 'Token exists but does not contain \'-\' separator:', userToken);
             } else {
-                console.warn('No userToken provided in URL');
+                debugLog('warn', 'No userToken provided in URL');
             }
 
             if (!userId) {
                 throw new Error('USER không hợp lệ - Vui lòng đăng nhập từ App để lấy key');
             }
 
-            // Store for later use
-            uiState.userId = userId;
-            uiState.userToken = userToken;
-            uiState.deviceId = deviceId;
+            // Store for later use - with safety check
+            if (typeof uiState !== 'undefined') {
+                uiState.userId = userId;
+                uiState.userToken = userToken;
+                uiState.deviceId = deviceId;
+            } else {
+                debugLog('error', 'uiState is not defined in validateUserInput');
+                throw new Error('Lỗi khởi tạo hệ thống - Vui lòng tải lại trang');
+            }
 
             // Additional validation for user_id
             if (userId.toString().length < VALIDATION.USER_ID_MIN || userId.toString().length > VALIDATION.USER_ID_MAX) {
@@ -507,7 +526,7 @@
                 throw new Error('DEVICE ID không hợp lệ - Độ dài phải từ 3-100 ký tự');
             }
             
-            console.log('Validation successful - user_id:', userId, 'device_id:', deviceId);
+            debugLog('log', 'Validation successful - user_id:', userId, 'device_id:', deviceId);
             return true;
         }
 
@@ -586,6 +605,10 @@
 
         // ===== REQUEST PREPARATION =====
         function prepareRequestPayload() {
+            if (typeof uiState === 'undefined') {
+                throw new Error('Lỗi khởi tạo hệ thống - uiState không khả dụng');
+            }
+            
             const deviceId = uiState.deviceId;
             const timestamp = Date.now().toString();
             const endpoint = '/github/generate_24h_key';
@@ -638,7 +661,8 @@
         function handleResponse(result) {
             if (result.success && result.data) {
                 updateButtonState('success', '<i class="fas fa-check"></i> THÀNH CÔNG', 'fas fa-check');
-                document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + uiState.deviceId.slice(-8);
+                const deviceSuffix = (typeof uiState !== 'undefined' && uiState.deviceId) ? uiState.deviceId.slice(-8) : 'UNKNOWN';
+                document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceSuffix;
                 document.getElementById('step-1').classList.add('hidden');
                 document.getElementById('step-2').classList.remove('hidden');
                 
@@ -670,7 +694,7 @@
                 if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
                     throw new Error('🚫 Yêu cầu xác thực Cloudflare Turnstile bắt buộc');
                 } else if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
-                    console.warn('Turnstile not verified, proceeding with fallback mode');
+                    debugLog('warn', 'Turnstile not verified, proceeding with fallback mode');
                 }
                 
                 updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
@@ -793,17 +817,17 @@
         window.addEventListener('load', () => {
             securityState.csrfToken = generateCSRFToken();
             
-            // Initialize button state - only after uiState is defined
-            setTimeout(() => {
-                updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
-            }, 100);
-            
-            // Validate user input on page load
+            // Validate user input on page load - BEFORE using uiState
             try {
                 validateUserInput();
             } catch (error) {
-                console.warn('Invalid user input detected on page load:', error.message);
+                debugLog('warn', 'Invalid user input detected on page load:', error.message);
             }
+            
+            // Initialize button state - only after uiState is defined and validation is done
+            setTimeout(() => {
+                updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+            }, 100);
         });
     </script>
 </body>
