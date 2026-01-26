@@ -191,8 +191,7 @@
                      data-action="keygen"></div>
             </div>
 
-            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 0.875rem; border-radius: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: transform 0.2s; border: none; font-size: 0.875rem;" disabled>
-                <i id="btnIcon" class="fas fa-spinner fa-spin"></i>
+            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 0.875rem; border-radius: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; border: none; font-size: 0.875rem;" disabled>
                 <span id="btnText">ĐANG KHỞI TẠO...</span>
             </button>
             <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-style: italic;">Yêu cầu của bạn sẽ được xử lý an toàn và bảo mật.</p>
@@ -286,20 +285,19 @@
             const message = error.message || error;
             debugLog('error', `Error in ${context}:`, message);
             showError(message);
-            updateButtonState('error', 'LỖI', 'fas fa-exclamation-triangle');
+            updateButtonState('error', 'LỖI');
             
             setTimeout(() => {
                 if (typeof uiState !== 'undefined') {
-                    updateButtonState('idle', 'THỬ LẠI', 'fas fa-redo');
+                    updateButtonState('idle', 'THỬ LẠI');
                 }
             }, TIMEOUTS.BUTTON_RESET);
         }
 
         // ===== UI HELPER FUNCTIONS =====
-        function updateButtonState(status, text, icon) {
+        function updateButtonState(status, text) {
             const btnAction = document.getElementById('btnAction');
             const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
             
             // Remove all state classes
             btnAction.classList.remove('btn-processing', 'btn-error', 'btn-success');
@@ -322,9 +320,8 @@
                     btnAction.disabled = false;
             }
             
-            // Update button text and icon
+            // Update button text
             if (text) btnText.textContent = text;
-            if (icon) btnIcon.className = icon;
             
             // Only update uiState if it's defined
             if (typeof uiState !== 'undefined') {
@@ -382,7 +379,7 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
-            updateButtonState('error', 'LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
+            updateButtonState('error', 'LỖI XÁC THỰC');
             showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
         
@@ -392,7 +389,7 @@
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
                         debugLog('error', 'Turnstile required but not loaded - blocking access');
-                        updateButtonState('error', 'YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
+                        updateButtonState('error', 'YÊU CẦU XÁC THỰC CLOUDFLARE');
                         showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
                     } else {
                         debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
@@ -400,7 +397,7 @@
                         if (btnAction) {
                             btnAction.disabled = false;
                             btnAction.style.opacity = '1';
-                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT (FALLBACK)', 'fas fa-bolt');
+                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT (FALLBACK)');
                         }
                     }
                 }
@@ -657,7 +654,7 @@
         // ===== RESPONSE HANDLING =====
         function handleResponse(result) {
             if (result.success && result.data) {
-                updateButtonState('success', 'THÀNH CÔNG', 'fas fa-check');
+                updateButtonState('success', 'THÀNH CÔNG');
                 const deviceSuffix = (typeof uiState !== 'undefined' && uiState.deviceId) ? uiState.deviceId.slice(-8) : 'UNKNOWN';
                 document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceSuffix;
                 document.getElementById('step-1').classList.add('hidden');
@@ -678,10 +675,10 @@
                 
                 // Validate input
                 if (!validateUserInput()) {
-                    updateButtonState('error', 'THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
+                    updateButtonState('error', 'THIẾU THÔNG TIN');
                     setTimeout(() => {
                         if (typeof uiState !== 'undefined') {
-                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
                         }
                     }, TIMEOUTS.BUTTON_RESET);
                     return;
@@ -694,7 +691,7 @@
                     debugLog('warn', 'Turnstile not verified, proceeding with fallback mode');
                 }
                 
-                updateButtonState('processing', 'ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG XỬ LÝ...');
                 
                 // Security checks
                 checkRateLimit();
@@ -703,7 +700,7 @@
                 }
 
                 // Prepare request
-                updateButtonState('processing', 'ĐANG XÁC THỰC...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG XÁC THỰC...');
                 const payload = prepareRequestPayload();
                 
                 // Generate proof of work
@@ -714,7 +711,7 @@
                 payload.endpoint_signature = await generateEndpointSignature(payload.endpoint, payload.timestamp, payload.device_id);
 
                 // Send request
-                updateButtonState('processing', 'ĐANG KẾT NỐI...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG KẾT NỐI...');
                 const result = await sendRequest(payload);
 
                 // Handle response
@@ -823,7 +820,7 @@
             
             // Initialize button state - only after uiState is defined and validation is done
             setTimeout(() => {
-                updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
             }, 100);
         });
     </script>
