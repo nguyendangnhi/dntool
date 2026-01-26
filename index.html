@@ -102,39 +102,6 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.6875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-        .status-idle {
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-        .status-processing {
-            background: rgba(245, 158, 11, 0.1);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-        .status-error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-        .status-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
         .turnstile-container {
             display: flex;
             justify-content: center;
@@ -195,12 +162,6 @@
         <!-- Header Section -->
         <h1 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">PRO</span></h1>
         <p style="font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
-
-        <!-- Status Indicator -->
-        <div id="statusIndicator" class="status-indicator status-idle">
-            <i class="fas fa-info-circle"></i>
-            <span>Sẵn sàng</span>
-        </div>
 
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
@@ -276,7 +237,7 @@
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
             REQUIRE_TURNSTILE: false,
-            // APP_SESSION_ID đã được xóa - chỉ dùng ở server!
+          
         };
 
         // ===== STATE MANAGEMENT =====
@@ -328,41 +289,25 @@
             const btnAction = document.getElementById('btnAction');
             const btnText = document.getElementById('btnText');
             const btnIcon = document.getElementById('btnIcon');
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = statusIndicator.querySelector('span');
-            const statusIcon = statusIndicator.querySelector('i');
             
             // Remove all state classes
             btnAction.classList.remove('btn-processing', 'btn-error', 'btn-success');
-            statusIndicator.classList.remove('status-idle', 'status-processing', 'status-error', 'status-success');
             
             // Add new state classes and update content
             switch(status) {
                 case 'processing':
                     btnAction.classList.add('btn-processing');
-                    statusIndicator.classList.add('status-processing');
-                    statusText.textContent = 'Đang xử lý';
-                    statusIcon.className = 'fas fa-spinner fa-spin';
                     btnAction.disabled = true;
                     break;
                 case 'error':
                     btnAction.classList.add('btn-error');
-                    statusIndicator.classList.add('status-error');
-                    statusText.textContent = 'Lỗi';
-                    statusIcon.className = 'fas fa-exclamation-triangle';
                     btnAction.disabled = false;
                     break;
                 case 'success':
                     btnAction.classList.add('btn-success');
-                    statusIndicator.classList.add('status-success');
-                    statusText.textContent = 'Thành công';
-                    statusIcon.className = 'fas fa-check-circle';
                     btnAction.disabled = true;
                     break;
                 default: // idle
-                    statusIndicator.classList.add('status-idle');
-                    statusText.textContent = 'Sẵn sàng';
-                    statusIcon.className = 'fas fa-info-circle';
                     btnAction.disabled = false;
             }
             
