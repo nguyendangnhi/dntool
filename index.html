@@ -176,10 +176,7 @@
         
         <!-- Error Message Display -->
         <div id="errorMessage" class="error-message hidden" style="margin-bottom: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
-                <span id="errorText" style="color: #fca5a5; font-size: 0.75rem;"></span>
-            </div>
+            <span id="errorText" style="color: #fca5a5; font-size: 0.75rem;"></span>
         </div>
 
         <!-- Step 1: Action Button -->
@@ -289,11 +286,11 @@
             const message = error.message || error;
             debugLog('error', `Error in ${context}:`, message);
             showError(message);
-            updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
+            updateButtonState('error', 'LỖI', 'fas fa-exclamation-triangle');
             
             setTimeout(() => {
                 if (typeof uiState !== 'undefined') {
-                    updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
+                    updateButtonState('idle', 'THỬ LẠI', 'fas fa-redo');
                 }
             }, TIMEOUTS.BUTTON_RESET);
         }
@@ -326,7 +323,7 @@
             }
             
             // Update button text and icon
-            if (text) btnText.innerHTML = text;
+            if (text) btnText.textContent = text;
             if (icon) btnIcon.className = icon;
             
             // Only update uiState if it's defined
@@ -385,7 +382,7 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
-            updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
+            updateButtonState('error', 'LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
             showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
         
@@ -395,7 +392,7 @@
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
                         debugLog('error', 'Turnstile required but not loaded - blocking access');
-                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
+                        updateButtonState('error', 'YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
                         showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
                     } else {
                         debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
@@ -403,7 +400,7 @@
                         if (btnAction) {
                             btnAction.disabled = false;
                             btnAction.style.opacity = '1';
-                            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT (FALLBACK)', 'fas fa-bolt');
+                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT (FALLBACK)', 'fas fa-bolt');
                         }
                     }
                 }
@@ -660,7 +657,7 @@
         // ===== RESPONSE HANDLING =====
         function handleResponse(result) {
             if (result.success && result.data) {
-                updateButtonState('success', '<i class="fas fa-check"></i> THÀNH CÔNG', 'fas fa-check');
+                updateButtonState('success', 'THÀNH CÔNG', 'fas fa-check');
                 const deviceSuffix = (typeof uiState !== 'undefined' && uiState.deviceId) ? uiState.deviceId.slice(-8) : 'UNKNOWN';
                 document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceSuffix;
                 document.getElementById('step-1').classList.add('hidden');
@@ -681,10 +678,10 @@
                 
                 // Validate input
                 if (!validateUserInput()) {
-                    updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
+                    updateButtonState('error', 'THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
                     setTimeout(() => {
                         if (typeof uiState !== 'undefined') {
-                            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
                         }
                     }, TIMEOUTS.BUTTON_RESET);
                     return;
@@ -697,7 +694,7 @@
                     debugLog('warn', 'Turnstile not verified, proceeding with fallback mode');
                 }
                 
-                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG XỬ LÝ...', 'fas fa-spinner fa-spin');
                 
                 // Security checks
                 checkRateLimit();
@@ -706,7 +703,7 @@
                 }
 
                 // Prepare request
-                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG XÁC THỰC...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG XÁC THỰC...', 'fas fa-spinner fa-spin');
                 const payload = prepareRequestPayload();
                 
                 // Generate proof of work
@@ -717,7 +714,7 @@
                 payload.endpoint_signature = await generateEndpointSignature(payload.endpoint, payload.timestamp, payload.device_id);
 
                 // Send request
-                updateButtonState('processing', '<i class="fas fa-spinner fa-spin"></i> ĐANG KẾT NỐI...', 'fas fa-spinner fa-spin');
+                updateButtonState('processing', 'ĐANG KẾT NỐI...', 'fas fa-spinner fa-spin');
                 const result = await sendRequest(payload);
 
                 // Handle response
@@ -747,14 +744,14 @@
         }
         
         function showCopySuccess(copyBtn) {
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i> ĐÃ SAO CHÉP!';
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'ĐÃ SAO CHÉP!';
             copyBtn.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
             copyBtn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
             copyBtn.style.color = '#34d399';
             
             setTimeout(() => {
-                copyBtn.innerHTML = originalText;
+                copyBtn.textContent = originalText;
                 copyBtn.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
                 copyBtn.style.borderColor = 'rgba(59, 130, 246, 0.2)';
                 copyBtn.style.color = '#60a5fa';
@@ -826,7 +823,7 @@
             
             // Initialize button state - only after uiState is defined and validation is done
             setTimeout(() => {
-                updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
             }, 100);
         });
     </script>
