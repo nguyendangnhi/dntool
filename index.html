@@ -196,7 +196,11 @@
         <h1 style="font-size: 1.25rem; font-weight: 900; margin-bottom: 0.25rem; font-style: italic;">DNTOOL <span style="color: #3b82f6; font-style: normal; font-weight: 300;">PRO</span></h1>
         <p style="font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1.5rem; font-weight: 700;">Hệ Thống Xác Thực</p>
 
-       
+        <!-- Status Indicator -->
+        <div id="statusIndicator" class="status-indicator status-idle">
+            <i class="fas fa-info-circle"></i>
+            <span>Sẵn sàng</span>
+        </div>
 
         <!-- Honeypot Fields (hidden traps for bots) -->
         <input type="text" id="website" class="honeypot" tabindex="-1" autocomplete="off">
@@ -271,7 +275,7 @@
                 enabled: false
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
-            REQUIRE_TURNSTILE: false
+            REQUIRE_TURNSTILE: false,
             // APP_SESSION_ID đã được xóa - chỉ dùng ở server!
         };
 
@@ -646,6 +650,7 @@
             }
 
             return {
+                auth_key: "Mat_Ma_Sieu_Cap_123_be_tap_code_vip_pro_chong_hack_ha_ha",
                 action: 'generate_24h_key',
                 module: 'github',
                 user_id: uiState.userId,
@@ -858,6 +863,5 @@
     </script>
 </body>
 </html>
-
 
 
