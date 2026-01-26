@@ -313,7 +313,9 @@
             updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI', 'fas fa-exclamation-triangle');
             
             setTimeout(() => {
-                updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
+                if (typeof uiState !== 'undefined') {
+                    updateButtonState('idle', '<i class="fas fa-redo"></i> THỬ LẠI', 'fas fa-redo');
+                }
             }, TIMEOUTS.BUTTON_RESET);
         }
 
@@ -364,7 +366,10 @@
             if (text) btnText.innerHTML = text;
             if (icon) btnIcon.className = icon;
             
-            uiState.currentStatus = status;
+            // Only update uiState if it's defined
+            if (typeof uiState !== 'undefined') {
+                uiState.currentStatus = status;
+            }
         }
         
         function showError(message) {
@@ -373,19 +378,25 @@
             
             errorText.textContent = message;
             errorDiv.classList.remove('hidden');
-            uiState.errorMessage = message;
+            if (typeof uiState !== 'undefined') {
+                uiState.errorMessage = message;
+            }
             
             // Auto-hide error after timeout
             setTimeout(() => {
                 errorDiv.classList.add('hidden');
-                uiState.errorMessage = '';
+                if (typeof uiState !== 'undefined') {
+                    uiState.errorMessage = '';
+                }
             }, TIMEOUTS.ERROR_HIDE);
         }
         
         function hideError() {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.classList.add('hidden');
-            uiState.errorMessage = '';
+            if (typeof uiState !== 'undefined') {
+                uiState.errorMessage = '';
+            }
         }
 
         // ===== TURNSTILE CALLBACKS =====
@@ -412,7 +423,7 @@
             turnstileLoaded = false;
             
             updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> LỖI XÁC THỰC', 'fas fa-exclamation-triangle');
-            showError('Xác thực thất bại. Vui lòng thử lại.');
+            showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
         
         // Check if Turnstile is loaded
@@ -421,8 +432,8 @@
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
                         console.error('Turnstile required but not loaded - blocking access');
-                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC ', 'fas fa-exclamation-triangle');
-                        showError('Vui lòng tải lại trang');
+                        updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> YÊU CẦU XÁC THỰC CLOUDFLARE', 'fas fa-exclamation-triangle');
+                        showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
                     } else {
                         console.warn('Turnstile not loaded, enabling button with fallback verification');
                         const btnAction = document.getElementById('btnAction');
@@ -698,7 +709,9 @@
                 if (!validateUserInput()) {
                     updateButtonState('error', '<i class="fas fa-exclamation-triangle"></i> THIẾU THÔNG TIN', 'fas fa-exclamation-triangle');
                     setTimeout(() => {
-                        updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                        if (typeof uiState !== 'undefined') {
+                            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+                        }
                     }, TIMEOUTS.BUTTON_RESET);
                     return;
                 }
@@ -830,8 +843,10 @@
         window.addEventListener('load', () => {
             securityState.csrfToken = generateCSRFToken();
             
-            // Initialize button state
-            updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+            // Initialize button state - only after uiState is defined
+            setTimeout(() => {
+                updateButtonState('idle', '<i class="fas fa-bolt"></i> NHẬN MÃ KÍCH HOẠT', 'fas fa-bolt');
+            }, 100);
             
             // Validate user input on page load
             try {
@@ -843,6 +858,4 @@
     </script>
 </body>
 </html>
-
-
 
