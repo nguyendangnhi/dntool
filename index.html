@@ -235,12 +235,11 @@
             },
             PROOF_OF_WORK: {
                 difficulty: 3,
-                enabled: false
+                enabled: true
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
-            REQUIRE_TURNSTILE: false,
-            DEBUG: false,
-          
+            REQUIRE_TURNSTILE: true,
+            DEBUG: false
         };
 
         // ===== STATE MANAGEMENT =====
@@ -274,10 +273,6 @@
             const randomBytes = new Uint8Array(32);
             crypto.getRandomValues(randomBytes);
             return btoa(String.fromCharCode(...randomBytes));
-        }
-
-        function generateRequestId() {
-            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         // ===== ERROR HANDLING =====
@@ -506,8 +501,8 @@
             }
 
             // Additional validation for user_id
-            if (userId.toString().length < VALIDATION.USER_ID_MIN || userId.toString().length > VALIDATION.USER_ID_MAX) {
-                throw new Error('USER ID không hợp lệ - Độ dài phải từ 1-10 chữ số');
+            if (userId < 1 || userId > 9999999999) {
+                throw new Error('USER ID không hợp lệ - Phải từ 1-9999999999');
             }
             
             // Check for suspicious characters (should be numeric only)
@@ -535,7 +530,7 @@
             let nonce = 0;
             let hash = '';
             let iterations = 0;
-            const maxIterations = 1000000;
+            const maxIterations = 50000;
 
             // Use setTimeout to prevent browser freezing
             return new Promise((resolve, reject) => {
@@ -621,7 +616,7 @@
                 csrf_token: securityState.csrfToken,
                 user_agent: navigator.userAgent,
                 timestamp: timestamp,
-                proof_of_work: null, // sẽ được thêm sau
+                proof_of_work: 'disabled', // sẽ được thêm sau
                 turnstile_token: securityState.turnstileToken,
                 endpoint: endpoint,
                 endpoint_signature: null // sẽ được thêm sau
@@ -674,8 +669,11 @@
                 hideError();
                 
                 // Validate input
-                if (!validateUserInput()) {
+                try {
+                    validateUserInput();
+                } catch (error) {
                     updateButtonState('error', 'THIẾU THÔNG TIN');
+                    showError(error.message);
                     setTimeout(() => {
                         if (typeof uiState !== 'undefined') {
                             updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
@@ -687,8 +685,6 @@
                 // Check Turnstile
                 if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
                     throw new Error('🚫 Yêu cầu xác thực Cloudflare Turnstile bắt buộc');
-                } else if (!turnstileLoaded && (!securityState.turnstileVerified || !securityState.turnstileToken)) {
-                    debugLog('warn', 'Turnstile not verified, proceeding with fallback mode');
                 }
                 
                 updateButtonState('processing', 'ĐANG XỬ LÝ...');
@@ -785,7 +781,6 @@
                 } catch (e) {
                     canvasHash = crypto.randomUUID();
                 }
-                
                 deviceId = 'DEVICE_' + btoa((canvasHash || 'fallback') + Date.now()).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
                 localStorage.setItem('device_id', deviceId);
             }
@@ -812,11 +807,7 @@
             securityState.csrfToken = generateCSRFToken();
             
             // Validate user input on page load - BEFORE using uiState
-            try {
-                validateUserInput();
-            } catch (error) {
-                debugLog('warn', 'Invalid user input detected on page load:', error.message);
-            }
+            validateUserInput();
             
             // Initialize button state - only after uiState is defined and validation is done
             setTimeout(() => {
@@ -826,7 +817,3 @@
     </script>
 </body>
 </html>
-
-
-
-
