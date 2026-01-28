@@ -74,6 +74,31 @@
             background: linear-gradient(135deg, #10b981, #059669);
             box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
         }
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.4);
+        }
+        .btn-error:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(239, 68, 68, 0.4);
+        }
+        .copy-btn {
+            width: 100%;
+            background-color: rgba(59, 130, 246, 0.1);
+            padding: 0.625rem;
+            border-radius: 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #60a5fa;
+            transition: all 0.2s;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            cursor: pointer;
+        }
+        .copy-btn:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
         .key-box {
             background: rgba(0, 0, 0, 0.4);
             border: 1px dashed rgba(59, 130, 246, 0.5);
@@ -191,7 +216,7 @@
                      data-action="keygen"></div>
             </div>
 
-            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" style="width: 100%; padding: 0.875rem; border-radius: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; border: none; font-size: 0.875rem;" disabled>
+            <button onclick="initiateKeyRequest()" id="btnAction" class="btn-main" disabled>
                 <span id="btnText">ĐANG KHỞI TẠO...</span>
             </button>
             <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-style: italic;">DNTOOL Chúc Bạn 1 Ngày Vui Vẻ .</p>
@@ -202,7 +227,7 @@
             <div class="key-box" style="padding: 1rem; border-radius: 0.75rem; text-align: left;">
                 <p style="font-size: 0.625rem; color: #60a5fa; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">Key của bạn:</p>
                 <div id="resultKey" style="font-size: 0.75rem; font-weight: 700; color: white; word-break: break-all; margin-bottom: 0.875rem;">---</div>
-                <button onclick="copyKeyToClipboard()" style="width: 100%; background-color: rgba(59, 130, 246, 0.1); padding: 0.625rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 700; color: #60a5fa; transition: all 0.2s; border: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer;">
+                <button onclick="copyKeyToClipboard()" class="copy-btn">
                     SAO CHÉP NGAY
                 </button>
             </div>
@@ -360,11 +385,15 @@
             securityState.turnstileVerified = true;
             turnstileLoaded = true;
             
+            // Hide any existing error messages when Turnstile succeeds
+            hideError();
+            
             // Enable button immediately after verification
             const btnAction = document.getElementById('btnAction');
             if (btnAction) {
                 btnAction.disabled = false;
                 btnAction.style.opacity = '1';
+                updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
             }
         }
 
@@ -374,7 +403,7 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
-            updateButtonState('error', 'LỖI XÁC THỰC');
+            updateButtonState('error', 'THỬ LẠI');
             showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
         
@@ -384,17 +413,20 @@
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
                         debugLog('error', 'Turnstile required but not loaded - blocking access');
-                        updateButtonState('error', 'YÊU CẦU XÁC THỰC CLOUDFLARE');
-                        showError('Vui lòng bật Cloudflare Turnstile và tải lại trang');
+                        updateButtonState('error', 'TẢI LẠI TRANG');
+                        showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
                     } else {
                         debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
                         const btnAction = document.getElementById('btnAction');
                         if (btnAction) {
                             btnAction.disabled = false;
                             btnAction.style.opacity = '1';
-                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT (FALLBACK)');
+                            updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
                         }
                     }
+                } else {
+                    // Turnstile is loaded and ready
+                    hideError();
                 }
             }, TIMEOUTS.TURNSTILE_CHECK);
         });
@@ -684,7 +716,10 @@
                 
                 // Check Turnstile
                 if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
-                    throw new Error('🚫 Yêu cầu xác thực Cloudflare Turnstile bắt buộc');
+                    hideError();
+                    updateButtonState('error', 'TẢI LẠI TRANG');
+                    showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
+                    return;
                 }
                 
                 updateButtonState('processing', 'ĐANG XỬ LÝ...');
@@ -809,9 +844,9 @@
             // Validate user input on page load - BEFORE using uiState
             validateUserInput();
             
-            // Initialize button state - only after uiState is defined and validation is done
+            // Initialize button state
             setTimeout(() => {
-                updateButtonState('idle', 'NHẬN MÃ KÍCH HOẠT');
+                updateButtonState('idle', 'ĐANG KHỞI TẠO...');
             }, 100);
         });
     </script>
