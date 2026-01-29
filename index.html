@@ -148,6 +148,12 @@
             transform-origin: center;
         }
         
+        /* Loading spinner animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 480px) {
             .glass-card {
@@ -210,9 +216,17 @@
         <div id="errorMessage" class="error-message hidden" style="margin-bottom: 1rem;">
             <span id="errorText" style="color: #fca5a5; font-size: 0.75rem;"></span>
         </div>
+        
+        <!-- Loading State -->
+        <div id="loading-state">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;">
+                <div style="width: 3rem; height: 3rem; border: 3px solid rgba(59, 130, 246, 0.2); border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                <p style="font-size: 0.875rem; color: #60a5fa; font-weight: 600; margin: 0;">Đang tải xác thực...</p>
+            </div>
+        </div>
 
-        <!-- Step 1: Action Button -->
-        <div id="step-1">
+        <!-- Main Content (Hidden initially) -->
+        <div id="main-content" class="hidden">
             <!-- Cloudflare Turnstile Widget -->
             <div class="turnstile-container">
                 <div class="cf-turnstile" 
@@ -392,8 +406,9 @@
             securityState.turnstileVerified = true;
             turnstileLoaded = true;
             
-            // Hide any existing error messages when Turnstile succeeds
-            hideError();
+            // Hide loading state and show main content
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
             
             // Enable button immediately after verification
             const btnAction = document.getElementById('btnAction');
@@ -410,6 +425,10 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
+            // Show main content with error state
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            
             updateButtonState('error', 'THỬ LẠI');
             showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
         }
@@ -419,11 +438,21 @@
             setTimeout(() => {
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
-                        debugLog('error', 'Turnstile required but not loaded - blocking access');
+                        debugLog('error', 'Turnstile required but not loaded - showing error');
+                        
+                        // Show main content with error state
+                        document.getElementById('loading-state').classList.add('hidden');
+                        document.getElementById('main-content').classList.remove('hidden');
+                        
                         updateButtonState('error', 'TẢI LẠI TRANG');
                         showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
                     } else {
                         debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
+                        
+                        // Show main content immediately
+                        document.getElementById('loading-state').classList.add('hidden');
+                        document.getElementById('main-content').classList.remove('hidden');
+                        
                         const btnAction = document.getElementById('btnAction');
                         if (btnAction) {
                             btnAction.disabled = false;
@@ -432,8 +461,9 @@
                         }
                     }
                 } else {
-                    // Turnstile is loaded and ready
-                    hideError();
+                    // Turnstile is loaded and ready - show main content
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
                 }
             }, TIMEOUTS.TURNSTILE_CHECK);
         });
@@ -723,7 +753,6 @@
                 
                 // Check Turnstile
                 if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
-                    hideError();
                     updateButtonState('error', 'TẢI LẠI TRANG');
                     showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
                     return;
