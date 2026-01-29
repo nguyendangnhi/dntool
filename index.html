@@ -425,12 +425,8 @@
             securityState.turnstileVerified = false;
             turnstileLoaded = false;
             
-            // Show main content with error state
-            document.getElementById('loading-state').classList.add('hidden');
-            document.getElementById('main-content').classList.remove('hidden');
-            
-            updateButtonState('error', 'THỬ LẠI');
-            showError('Xác thực Cloudflare thất bại. Vui lòng thử lại.');
+            // Keep loading state - do not show error message
+            // Let the natural timeout handle it
         }
         
         // Check if Turnstile is loaded
@@ -438,14 +434,10 @@
             setTimeout(() => {
                 if (!turnstileLoaded) {
                     if (CONFIG.REQUIRE_TURNSTILE) {
-                        debugLog('error', 'Turnstile required but not loaded - showing error');
+                        debugLog('error', 'Turnstile required but not loaded - keeping loading state');
                         
-                        // Show main content with error state
-                        document.getElementById('loading-state').classList.add('hidden');
-                        document.getElementById('main-content').classList.remove('hidden');
-                        
-                        updateButtonState('error', 'TẢI LẠI TRANG');
-                        showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
+                        // Keep loading state running - do not show error or reload button
+                        // The loading will continue until Turnstile loads or times out naturally
                     } else {
                         debugLog('warn', 'Turnstile not loaded, enabling button with fallback verification');
                         
@@ -753,8 +745,8 @@
                 
                 // Check Turnstile
                 if (CONFIG.REQUIRE_TURNSTILE && !turnstileLoaded) {
-                    updateButtonState('error', 'TẢI LẠI TRANG');
-                    showError('Cloudflare Turnstile chưa sẵn sàng. Vui lòng tải lại trang.');
+                    // Keep loading state - do not show error or reload button
+                    // Let the natural timeout handle it
                     return;
                 }
                 
