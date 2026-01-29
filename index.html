@@ -280,7 +280,7 @@
                 timeWindow: 60000 // 60 seconds
             },
             PROOF_OF_WORK: {
-                difficulty: 3,
+                difficulty: 2,
                 enabled: true
             },
             TURNSTILE_SITE_KEY: '0x4AAAAAACNwFP1me9pXoX_D',
@@ -713,7 +713,7 @@
                 updateButtonState('success', 'THÀNH CÔNG');
                 const deviceSuffix = (typeof uiState !== 'undefined' && uiState.deviceId) ? uiState.deviceId.slice(-8) : 'UNKNOWN';
                 document.getElementById('resultKey').innerText = result.data.key || 'ACTIVE-USER-' + deviceSuffix;
-                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('main-content').classList.add('hidden');
                 document.getElementById('step-2').classList.remove('hidden');
                 
                 securityState.csrfToken = generateCSRFToken();
